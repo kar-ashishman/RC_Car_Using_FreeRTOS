@@ -9,12 +9,13 @@ RM := rm -rf
 
 # All of the sources participating in the build are defined here
 -include sources.mk
--include Startup/subdir.mk
--include Src/subdir.mk
 -include FreeRTOS_Kernel/portable/MemMang/subdir.mk
 -include FreeRTOS_Kernel/portable/GCC/ARM_CM4F/subdir.mk
 -include FreeRTOS_Kernel/subdir.mk
--include Car/Src/subdir.mk
+-include Drivers/STM32F4xx_HAL_Driver/Src/subdir.mk
+-include Core/Startup/subdir.mk
+-include Core/Src/subdir.mk
+-include Car/subdir.mk
 -include objects.mk
 
 ifneq ($(MAKECMDGOALS),clean)
@@ -37,34 +38,34 @@ $(wildcard ../makefile.init) \
 $(wildcard ../makefile.targets) \
 
 
-BUILD_ARTIFACT_NAME := RCCar_FreeRTOS
+BUILD_ARTIFACT_NAME := FreeRTOS_RC_Car
 BUILD_ARTIFACT_EXTENSION := elf
 BUILD_ARTIFACT_PREFIX :=
 BUILD_ARTIFACT := $(BUILD_ARTIFACT_PREFIX)$(BUILD_ARTIFACT_NAME)$(if $(BUILD_ARTIFACT_EXTENSION),.$(BUILD_ARTIFACT_EXTENSION),)
 
 # Add inputs and outputs from these tool invocations to the build variables 
 EXECUTABLES += \
-RCCar_FreeRTOS.elf \
+FreeRTOS_RC_Car.elf \
 
 MAP_FILES += \
-RCCar_FreeRTOS.map \
+FreeRTOS_RC_Car.map \
 
 SIZE_OUTPUT += \
 default.size.stdout \
 
 OBJDUMP_LIST += \
-RCCar_FreeRTOS.list \
+FreeRTOS_RC_Car.list \
 
 
 # All Target
 all: main-build
 
 # Main-build Target
-main-build: RCCar_FreeRTOS.elf secondary-outputs
+main-build: FreeRTOS_RC_Car.elf secondary-outputs
 
 # Tool invocations
-RCCar_FreeRTOS.elf RCCar_FreeRTOS.map: $(OBJS) $(USER_OBJS) C:\Vault\EmbeddedSTMWorkspace\RC_Car_Using_FreeRTOS\Project\STM32F446RETX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "RCCar_FreeRTOS.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Vault\EmbeddedSTMWorkspace\RC_Car_Using_FreeRTOS\Project\STM32F446RETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="RCCar_FreeRTOS.map" -Wl,--gc-sections -static -L"C:\Vault\EmbeddedSTMWorkspace\RC_Car_Using_FreeRTOS\Project\FreeRTOS_Kernel" -L"C:\Vault\EmbeddedSTMWorkspace\RC_Car_Using_FreeRTOS\Project\FreeRTOS_Kernel\portable\GCC\ARM_CM4F" -L"C:\Vault\EmbeddedSTMWorkspace\RC_Car_Using_FreeRTOS\Project\FreeRTOS_Kernel\portable\MemMang" -L"C:\Vault\EmbeddedSTMWorkspace\RC_Car_Using_FreeRTOS\Project\Car\Src" --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+FreeRTOS_RC_Car.elf FreeRTOS_RC_Car.map: $(OBJS) $(USER_OBJS) C:\Vault\EmbeddedSTMWorkspace\RC_Car_Using_FreeRTOS\Project\STM32F446RETX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "FreeRTOS_RC_Car.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Vault\EmbeddedSTMWorkspace\RC_Car_Using_FreeRTOS\Project\STM32F446RETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="FreeRTOS_RC_Car.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 
@@ -73,14 +74,14 @@ default.size.stdout: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
 	@echo 'Finished building: $@'
 	@echo ' '
 
-RCCar_FreeRTOS.list: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-objdump -h -S $(EXECUTABLES) > "RCCar_FreeRTOS.list"
+FreeRTOS_RC_Car.list: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-objdump -h -S $(EXECUTABLES) > "FreeRTOS_RC_Car.list"
 	@echo 'Finished building: $@'
 	@echo ' '
 
 # Other Targets
 clean:
-	-$(RM) RCCar_FreeRTOS.elf RCCar_FreeRTOS.list RCCar_FreeRTOS.map default.size.stdout
+	-$(RM) FreeRTOS_RC_Car.elf FreeRTOS_RC_Car.list FreeRTOS_RC_Car.map default.size.stdout
 	-@echo ' '
 
 secondary-outputs: $(SIZE_OUTPUT) $(OBJDUMP_LIST)

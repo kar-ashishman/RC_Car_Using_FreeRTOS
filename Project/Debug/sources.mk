@@ -22,10 +22,11 @@ C_DEPS :=
 
 # Every subdirectory with source files must be described here
 SUBDIRS := \
-Car/Src \
+Car \
+Core/Src \
+Core/Startup \
+Drivers/STM32F4xx_HAL_Driver/Src \
 FreeRTOS_Kernel \
 FreeRTOS_Kernel/portable/GCC/ARM_CM4F \
 FreeRTOS_Kernel/portable/MemMang \
-Src \
-Startup \
 
