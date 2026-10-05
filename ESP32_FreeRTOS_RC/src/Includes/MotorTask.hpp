@@ -4,6 +4,8 @@
 class MotorTask : public Task {
 public:
     MotorTask();    
-    void update(void *parameters) override;
     ~MotorTask() override;
+
+private:
+    void updateRoutine() override;
 };

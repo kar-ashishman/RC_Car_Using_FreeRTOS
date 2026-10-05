@@ -1,3 +1,5 @@
+#pragma once
+
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "src/Includes/Enums.hpp"
@@ -35,10 +37,9 @@ class Task {
     /* Create a FreeRTOS task and return status 
        failed: Return false
        success: Return true */
-    static bool createTask();
-
-    /* Task Update Routine */
-    virtual void update(void *parameters) = 0;
+    bool taskCreate();
+    static void taskEntry(void *task);
+    
 
     protected:
     const char * const taskName_;
@@ -48,4 +49,6 @@ class Task {
     TaskHandle_t * const taskHandle_;
     const CoreId coreId_;
     const uint16_t taskRate_;
+
+    virtual void updateRoutine() = 0;
 };

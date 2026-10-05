@@ -1,11 +1,14 @@
 #include "src/Includes/MotorTask.hpp"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "src/Includes/Mutex.hpp"
+
+Mutex serialMonitorMutex(portMAX_DELAY);
 
 void application() {
     // Create a MotorTask instance
     MotorTask motorTask;
-    configASSERT(motorTask.createTask());
+    configASSERT(motorTask.taskCreate());
 }
 
 void setup() {
