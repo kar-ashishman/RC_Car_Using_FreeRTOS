@@ -1,5 +1,8 @@
 #include "src/Includes/MotorTask.hpp"
 #include "Arduino.h"
+#include "src/Includes/LockGuard.hpp"
+
+extern Mutex serialMonitorMutex;
 
 MotorTask::MotorTask() : Task(
         "MotorTask", 
@@ -11,17 +14,14 @@ MotorTask::MotorTask() : Task(
         1000
     ) {}
 
-void MotorTask::update(void *parameters) {
-    while (true) {
-        TickType_t xLastWakeTime = xTaskGetTickCount();
-        // Motor control logic here
-
-
-        Serial.println("Motor control task running");
-        vTaskDelayUntil(&xLastWakeTime, taskRate_ / portTICK_PERIOD_MS);
-    }
-}
-
 MotorTask::~MotorTask() {
     vTaskDelete(nullptr);
+}
+
+void MotorTask::updateRoutine() {
+    while (true) {
+        // can call multiple function calls here
+        LockGuard<Mutex> lock(serialMonitorMutex);
+        Serial.println("Motor control task running"); 
+    }
 }
