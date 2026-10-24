@@ -2,6 +2,7 @@
 #include "Arduino.h"
 #include "src/Guards/Includes/LockGuard.hpp"
 #include "src/Includes/GlobalData.hpp"
+#include <memory>
 
 LightsTask::LightsTask() : Task(
         "LightsTask", 
@@ -21,7 +22,8 @@ void LightsTask::updateRoutine() {
     while (true) {
         // Critical Section
         {   
-            LockGuard<Mutex> lock(serialMutex);
+            //LockGuard<Mutex> lock(serialMutex);
+            std::unique_ptr<LockGuard<Mutex>> lock = std::make_unique<LockGuard<Mutex>>(serialMutex);
             Serial.println("Light control task running");
         }
         vTaskDelay(getTaskRate());

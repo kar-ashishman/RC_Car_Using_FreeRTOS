@@ -24,7 +24,7 @@ Description:
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-#include "src/Includes/Enums.hpp"
+#include "src/Includes/GlobalTypes.hpp"
 #include <stdint.h>
 
 class Task {
