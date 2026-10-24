@@ -1,6 +1,6 @@
-#include "src/Includes/Mutex.hpp"
+#include "src/Guards/Includes/Mutex.hpp"
 
-Mutex::Mutex(uint16_t timeOut = portMAX_DELAY) : 
+Mutex::Mutex(long unsigned int timeOut = portMAX_DELAY) : 
     handle_(xSemaphoreCreateMutex()),
     timeOut_(timeOut) {}
 

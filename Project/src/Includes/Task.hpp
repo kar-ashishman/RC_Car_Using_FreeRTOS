@@ -1,46 +1,54 @@
-#pragma once
+/*
+FileName: Task.hpp
+LastEditedBy: Ashish
+Date: 23-10-2026
+Description:
+    Class definition for creating freeRTOS tasks.
+    This class abstracts freeRTOS task create API calls
+    with modern C++ RAII constructs.
 
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "src/Includes/Enums.hpp"
-
-/* FreeRTOS Task Abstraction -
-
-A task pinned to a core of Target
-
-BaseType_t xTaskCreatePinnedToCore(
+    A freeRTOS task create API call for ESP
+    BaseType_t xTaskCreatePinnedToCore(
     TaskFunction_t pvTaskCode,
     const char * const pcName,
     const uint32_t usStackDepth,
     void * const pvParameters,
     UBaseType_t uxPriority,
     TaskHandle_t * const pxCreatedTask,
-    const BaseType_t xCoreID
-);
-  
+    const BaseType_t xCoreID)
+
 */
+
+
+#pragma once
+
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "src/Includes/Enums.hpp"
+#include <stdint.h>
+
 class Task {
-    public:
+public:
     Task(
-        const char * const taskName_,
+        const char* const taskName_,
         const uint32_t stackDepth_,
-        void * const parameters_,
+        void* const parameters_,
         UBaseType_t priority_,
-        TaskHandle_t * const taskHandle_,
+        TaskHandle_t* const taskHandle_,
         const CoreId coreId_,
-        const uint16_t taskRate_);
-    
-    /* Each task has to manage resource clearning 
-       Independently */
+        const uint16_t taskRate_ 
+    );
+
     virtual ~Task();
 
-    /* static method for all tasks as this is called by FreeRTOS */
     bool taskCreate();
 
     /* Static method for the FreeRTOS task entry point */
-    static void taskEntry(void* task);
+    static void taskEntry(void* thisTask);
 
-    protected:
+    uint16_t getTaskRate();
+
+protected:
     const char * const taskName_;
     const uint32_t stackDepth_;
     void * const parameters_;
@@ -51,4 +59,5 @@ class Task {
 
     /* Task Functionality */
     virtual void updateRoutine() = 0;
+
 };

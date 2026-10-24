@@ -1,12 +1,11 @@
 #pragma once
 
-#include "src/Includes/Mutex.hpp"
+#include "src/Guards/Includes/Mutex.hpp"
 
 /* Class to provide RAII-style locking for a Mutex */
 template<typename T>
 class LockGuard {
     public:
-
     LockGuard(T& kernelObj) : handle_t(kernelObj) {
         kernelObj.lock();
     }

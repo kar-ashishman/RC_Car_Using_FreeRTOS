@@ -5,12 +5,12 @@
 
 class Mutex {
     public:
-        Mutex(uint16_t timeOut);
+        Mutex(long unsigned int timeOut);
         ~Mutex();
         bool lock();
         void unlock();
     
     private:
-        uint16_t timeOut_;
+        long unsigned int timeOut_;
         xSemaphoreHandle handle_;
 };
