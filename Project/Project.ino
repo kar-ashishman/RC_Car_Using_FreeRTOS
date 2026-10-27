@@ -7,7 +7,6 @@ void setup() {
     Serial.begin(115200);
 }
 
-// Application entry
 void loop() {
     MotorTask motorTask;
     configASSERT(motorTask.taskCreate());
