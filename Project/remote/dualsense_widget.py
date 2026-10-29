@@ -2,14 +2,17 @@
 
 The widget is purely visual/interactive; it forwards presses to a controller object that
 provides: is_active(name), stick_position(stick), key_label(name), tooltip_for(name),
-link_open, press(name, source), release(name, source), set_stick_mouse(stick, x, y),
+all_buttons(), link_status(), display (speed/indicator/boost), display_settings,
+press(name, source), release(name, source), set_stick_mouse(stick, x, y),
 clear_stick_mouse(stick) and a ``changed`` signal.
+
+The touchpad doubles as the remote's display (indicators, speed, boost, link status).
 """
 from __future__ import annotations
 
 import math
 
-from PySide6.QtCore import QEvent, QPointF, QRectF, QSize, Qt
+from PySide6.QtCore import QEvent, QPointF, QRectF, QSize, Qt, QTimer
 from PySide6.QtGui import (
     QBrush, QColor, QFont, QFontMetricsF, QLinearGradient, QPainter, QPainterPath, QPen,
     QPolygonF, QRadialGradient, QTransform,
@@ -43,6 +46,11 @@ FACE_R = 26.0
 
 KEY_GLYPHS = {"up": "↑", "down": "↓", "left": "←", "right": "→", "space": "Space"}
 
+SCREEN = QRectF(364, 106, 272, 138)
+STATUS_COLORS = {"online": "#3ddc84", "open": "#2f7bff", "waiting": "#ffb340", "offline": "#ff5a4f"}
+STATUS_TEXT = {"online": "ONLINE", "open": "UDP OPEN", "waiting": "NO REPLY", "offline": "OFFLINE"}
+STATUS_BARS = {"online": 4, "open": 3, "waiting": 1, "offline": 0}
+
 
 def _mirror(path: QPainterPath) -> QPainterPath:
     return QTransform(-1, 0, 0, 1, BASE_W, 0).map(path)
@@ -58,6 +66,10 @@ class DualSenseWidget(QWidget):
         self.setMinimumSize(560, 350)
         self.setFocusPolicy(Qt.StrongFocus)
         self._build_geometry()
+        self._blink_on = True
+        self._blink = QTimer(self)
+        self._blink.timeout.connect(self._toggle_blink)
+        controller.changed.connect(self._sync_blink)
         controller.changed.connect(self.update)
 
     def sizeHint(self):
@@ -93,6 +105,14 @@ class DualSenseWidget(QWidget):
         tp.quadTo(358, 255, 356, 238)
         tp.closeSubpath()
         self.touchpad = tp.intersected(self.body)
+
+        arrow = QPainterPath()
+        arrow.addPolygon(QPolygonF([QPointF(378, 124), QPointF(393, 112), QPointF(393, 119.5),
+                                    QPointF(408, 119.5), QPointF(408, 128.5), QPointF(393, 128.5),
+                                    QPointF(393, 136)]))
+        arrow.closeSubpath()
+        self.ind_left = arrow
+        self.ind_right = _mirror(arrow)
 
         l1 = QPainterPath()
         l1.addRoundedRect(QRectF(168, 66, 152, 36), 16, 16)
@@ -159,7 +179,7 @@ class DualSenseWidget(QWidget):
             "l1": QPointF(244, 92), "l2": QPointF(245, 44),
             "r1": QPointF(BASE_W - 244, 92), "r2": QPointF(BASE_W - 245, 44),
             "create": QPointF(322, 174), "options": QPointF(BASE_W - 322, 174),
-            "touchpad": QPointF(500, 176), "ps": QPointF(500, 290), "mute": QPointF(500, 392),
+            "touchpad": QPointF(500, 264), "ps": QPointF(500, 290), "mute": QPointF(500, 392),
         }
         for stick, c in STICK_CENTERS.items():
             self.label_pos[f"{stick}_stick_up"] = QPointF(c.x(), c.y() - 64)
@@ -313,8 +333,9 @@ class DualSenseWidget(QWidget):
             p.fillPath(self.touchpad, QColor(ACCENT.red(), ACCENT.green(), ACCENT.blue(), 70))
         p.setPen(QPen(QColor("#bfc4cc"), 1.4))
         p.drawPath(self.touchpad)
+        self._paint_screen(p, pressed)
 
-        color = QColor(ACCENT) if self.ctrl.link_open else QColor("#ffb340")
+        color = QColor(STATUS_COLORS[self.ctrl.link_status()])
         if not any(self.ctrl.is_active(n) for n in self.ctrl.all_buttons()):
             color.setAlpha(170)
         for width, alpha in ((12, 40), (7, 90), (3, 255)):
@@ -323,6 +344,139 @@ class DualSenseWidget(QWidget):
             p.setPen(QPen(c, width, Qt.SolidLine, Qt.RoundCap))
             p.drawLine(QPointF(340, 112), QPointF(349, 236))
             p.drawLine(QPointF(BASE_W - 340, 112), QPointF(BASE_W - 349, 236))
+
+    # ------------------------------------------------------------- display
+    def _sync_blink(self):
+        on = self.ctrl.display.indicator != "off"
+        interval = self.ctrl.display_settings.blink_ms
+        if on and (not self._blink.isActive() or self._blink.interval() != interval):
+            self._blink_on = True
+            self._blink.start(interval)
+        elif not on and self._blink.isActive():
+            self._blink.stop()
+            self._blink_on = True
+
+    def _toggle_blink(self):
+        self._blink_on = not self._blink_on
+        self.update()
+
+    def _paint_screen(self, p, pressed):
+        state, ds, status = self.ctrl.display, self.ctrl.display_settings, self.ctrl.link_status()
+        screen = QPainterPath()
+        screen.addRoundedRect(SCREEN, 14, 14)
+        g = QLinearGradient(0, SCREEN.top(), 0, SCREEN.bottom())
+        g.setColorAt(0, QColor("#18202a"))
+        g.setColorAt(1, QColor("#06080b"))
+        p.fillPath(screen, g)
+        p.save()
+        p.setClipPath(screen)
+
+        # Indicators
+        for side, path in (("left", self.ind_left), ("right", self.ind_right)):
+            lit = state.indicator in (side, "hazard") and self._blink_on
+            if lit:
+                p.setPen(QPen(QColor(61, 220, 132, 70), 9, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
+                p.setBrush(Qt.NoBrush)
+                p.drawPath(path)
+                p.fillPath(path, QColor("#3ddc84"))
+            else:
+                p.setPen(QPen(QColor("#2c4636"), 1.2))
+                p.setBrush(QColor("#13201a"))
+                p.drawPath(path)
+
+        # Connection status: signal bars + text
+        color = QColor(STATUS_COLORS[status])
+        text = STATUS_TEXT[status]
+        f = QFont()
+        f.setPixelSize(10)
+        f.setBold(True)
+        f.setLetterSpacing(QFont.AbsoluteSpacing, 0.6)
+        p.setFont(f)
+        tw = QFontMetricsF(f).horizontalAdvance(text)
+        x = 500 - (22 + 5 + tw) / 2
+        bars = STATUS_BARS[status]
+        for i in range(4):
+            h = 4 + i * 3
+            p.fillRect(QRectF(x + i * 5.5, 131 - h, 3.5, h), color if i < bars else QColor("#2a313b"))
+        if status == "offline":
+            p.setPen(QPen(color, 1.6, Qt.SolidLine, Qt.RoundCap))
+            p.drawLine(QPointF(x + 14, 117), QPointF(x + 21, 124))
+            p.drawLine(QPointF(x + 21, 117), QPointF(x + 14, 124))
+        p.setPen(color)
+        p.drawText(QRectF(x + 27, 116, tw + 4, 16), Qt.AlignLeft | Qt.AlignVCenter, text)
+
+        # Speed
+        speed = state.speed
+        f = QFont()
+        f.setPixelSize(44)
+        f.setBold(True)
+        p.setFont(f)
+        if status == "waiting" and speed is not None:
+            p.setPen(QColor("#6b7280"))  # stale: car stopped replying
+        else:
+            p.setPen(QColor("#ff9a3c") if state.boost else QColor("#f2f5f8"))
+        p.drawText(QRectF(400, 134, 200, 50), Qt.AlignCenter,
+                   "--" if speed is None else f"{speed:.{ds.speed_decimals}f}")
+        f = QFont()
+        f.setPixelSize(11)
+        f.setBold(True)
+        p.setFont(f)
+        p.setPen(QColor("#8b949e"))
+        p.drawText(QRectF(400, 183, 200, 14), Qt.AlignCenter, ds.speed_unit)
+
+        bar = QRectF(388, 203, 224, 6)
+        p.setPen(Qt.NoPen)
+        p.setBrush(QColor("#1f2630"))
+        p.drawRoundedRect(bar, 3, 3)
+        frac = 0.0 if speed is None else min(abs(speed) / ds.speed_max, 1.0)
+        if frac > 0:
+            g = QLinearGradient(bar.left(), 0, bar.right(), 0)
+            g.setColorAt(0, QColor("#3ddc84"))
+            g.setColorAt(0.65, QColor("#ffd23f"))
+            g.setColorAt(1, QColor("#ff4d4d"))
+            p.setBrush(g)
+            p.drawRoundedRect(QRectF(bar.left(), bar.top(), max(bar.width() * frac, 6), bar.height()), 3, 3)
+
+        # Boost
+        pill = QRectF(450, 217, 100, 20)
+        f = QFont()
+        f.setPixelSize(11)
+        f.setBold(True)
+        f.setLetterSpacing(QFont.AbsoluteSpacing, 0.8)
+        p.setFont(f)
+        if state.boost:
+            for grow, alpha in ((6, 40), (3, 80)):
+                p.setPen(Qt.NoPen)
+                p.setBrush(QColor(255, 106, 42, alpha))
+                p.drawRoundedRect(pill.adjusted(-grow, -grow, grow, grow), 10 + grow, 10 + grow)
+            g = QLinearGradient(pill.left(), 0, pill.right(), 0)
+            g.setColorAt(0, QColor("#ff8a2a"))
+            g.setColorAt(1, QColor("#ff3d3d"))
+            p.setBrush(g)
+            p.drawRoundedRect(pill, 10, 10)
+            p.setPen(QColor("#ffffff"))
+            p.drawText(pill, Qt.AlignCenter, "BOOST ON")
+        else:
+            p.setPen(QPen(QColor("#3a414c"), 1.2))
+            p.setBrush(Qt.NoBrush)
+            p.drawRoundedRect(pill, 10, 10)
+            p.setPen(QColor("#5c6470"))
+            p.drawText(pill, Qt.AlignCenter, "BOOST OFF")
+
+        # Glass sheen
+        sheen = QPainterPath()
+        sheen.moveTo(SCREEN.left(), SCREEN.top())
+        sheen.lineTo(SCREEN.right(), SCREEN.top())
+        sheen.lineTo(SCREEN.right(), SCREEN.top() + 26)
+        sheen.quadTo(500, SCREEN.top() + 52, SCREEN.left(), SCREEN.top() + 38)
+        sheen.closeSubpath()
+        p.fillPath(sheen, QColor(255, 255, 255, 10))
+        if pressed:
+            p.fillPath(screen, QColor(ACCENT.red(), ACCENT.green(), ACCENT.blue(), 40))
+        p.restore()
+        p.setPen(QPen(QColor("#8e959f"), 1.5))
+        p.setBrush(Qt.NoBrush)
+        p.drawPath(screen)
 
     def _paint_dpad(self, p, active):
         for name, path in self.dpad.items():

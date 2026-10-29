@@ -7,8 +7,10 @@ from __future__ import annotations
 import argparse
 import html
 import math
+import re
 import sys
 import time
+from dataclasses import dataclass
 from functools import partial
 from pathlib import Path
 
@@ -20,13 +22,30 @@ from PySide6.QtWidgets import (
 )
 
 from config_loader import (
-    BUTTON_NAMES, STICK_DIRECTIONS, STICKS, ConfigError, RemoteConfig, encode_command, load_config,
+    BUTTON_NAMES, STICK_DIRECTIONS, STICKS, ConfigError, DisplaySettings, RemoteConfig, encode_command,
+    load_config,
 )
 from dualsense_widget import DualSenseWidget
 from udp_link import LinkError, UdpLink
 
 DEFAULT_CONFIG = Path(__file__).with_name("config.json")
 STICK_ON, STICK_OFF = 0.5, 0.4  # hysteresis for turning stick drags into direction presses
+
+TELEMETRY_TOKEN = re.compile(r"([A-Za-z_]\w*)\s*[:=]\s*([^\s;,]+)")
+INDICATOR_WORDS = {
+    "L": "left", "LEFT": "left", "R": "right", "RIGHT": "right",
+    "H": "hazard", "HAZ": "hazard", "HAZARD": "hazard", "B": "hazard", "BOTH": "hazard",
+    "OFF": "off", "O": "off", "0": "off", "N": "off", "NONE": "off",
+}
+BOOL_WORDS = {"1": True, "ON": True, "TRUE": True, "Y": True, "YES": True,
+              "0": False, "OFF": False, "FALSE": False, "N": False, "NO": False}
+
+
+@dataclass
+class DisplayState:
+    speed: float | None = None   # None = unknown, shown as "--"
+    indicator: str = "off"       # off / left / right / hazard
+    boost: bool = False
 
 
 def _key_int(key) -> int:
@@ -81,6 +100,12 @@ class RemoteController(QObject):
         self._rx_timer = QTimer(self)
         self._rx_timer.setInterval(30)
         self._rx_timer.timeout.connect(self._poll_rx)
+        self.display = DisplayState()
+        self._last_rx: float | None = None
+        self._status = "offline"
+        self._status_timer = QTimer(self)
+        self._status_timer.timeout.connect(self._check_status)
+        self._status_timer.start(200)
 
     # ------------------------------------------------------------------ config
     def load(self) -> bool:
@@ -139,6 +164,14 @@ class RemoteController(QObject):
     def tooltip_for(self, name: str) -> str | None:
         if not self.cfg:
             return None
+        if name == "touchpad":
+            keys = self.display_settings.telemetry_keys
+            tele = ";".join(f"{k}:…" for k in keys.values() if k) or "disabled"
+            extra = (f"<br><i>Display</i> — link: {self.link_status()}, telemetry format from car: "
+                     f"<code>{html.escape(tele)}</code>")
+            b = self.cfg.buttons["touchpad"]
+            title = "<b>touchpad</b>" + (f" — {html.escape(b.description)}" if b.description else "")
+            return title + "<br>" + self._binding_row("touchpad", None) + extra
         if name.endswith("_stick"):
             stick = name[:-6]
             rows = [f"<b>{stick.title()} stick</b> (drag; right-click = {'L3' if stick == 'left' else 'R3'})"]
@@ -163,7 +196,70 @@ class RemoteController(QObject):
             parts.append(f"release <code>{html.escape(b.release)}</code>")
         if b.repeat_ms:
             parts.append(f"repeat {b.repeat_ms} ms")
+        for label_, action in (("display", b.display_press), ("display on release", b.display_release)):
+            if action:
+                parts.append(f"{label_} " + ", ".join(f"{k}={v}" for k, v in action.items()))
         return (f"{label}: " if label else "") + ", ".join(parts)
+
+    # ------------------------------------------------------------ display
+    @property
+    def display_settings(self) -> DisplaySettings:
+        return self.cfg.display if self.cfg else DisplaySettings()
+
+    def link_status(self) -> str:
+        """offline (socket closed), open (no replies expected), online or waiting (no recent reply)."""
+        if not self.link.is_open:
+            return "offline"
+        timeout = self.display_settings.link_timeout_ms
+        if timeout <= 0:
+            return "open"
+        if self._last_rx is not None and time.monotonic() - self._last_rx <= timeout / 1000:
+            return "online"
+        return "waiting"
+
+    def _check_status(self):
+        status = self.link_status()
+        if status != self._status:
+            self._status = status
+            self.changed.emit()
+
+    def apply_display_action(self, action: dict):
+        if not action:
+            return
+        d, ds = self.display, self.display_settings
+        for key, value in action.items():
+            if key == "boost":
+                d.boost = (not d.boost) if value == "toggle" else value
+            elif key == "indicator":
+                # Selecting the indicator that is already on switches it off, like a real stalk.
+                d.indicator = "off" if value == "off" or d.indicator == value else value
+            elif key == "speed":
+                new = (d.speed or 0) + float(value) if isinstance(value, str) else float(value)
+                d.speed = min(max(new, 0.0), ds.speed_max)
+        self.changed.emit()
+
+    def apply_telemetry(self, text: str) -> bool:
+        """Update the display from a packet like "SPD:42;IND:L;BST:1". Returns True if anything matched."""
+        fields_by_key = {k.upper(): f for f, k in self.display_settings.telemetry_keys.items() if k}
+        matched = False
+        for key, raw in TELEMETRY_TOKEN.findall(text):
+            field_name = fields_by_key.get(key.upper())
+            value = raw.upper()
+            if field_name == "speed":
+                try:
+                    self.display.speed = float(raw)
+                except ValueError:
+                    continue
+            elif field_name == "indicator" and value in INDICATOR_WORDS:
+                self.display.indicator = INDICATOR_WORDS[value]
+            elif field_name == "boost" and value in BOOL_WORDS:
+                self.display.boost = BOOL_WORDS[value]
+            else:
+                continue
+            matched = True
+        if matched:
+            self.changed.emit()
+        return matched
 
     # -------------------------------------------------------- press/release
     def press(self, name: str, source: str):
@@ -210,11 +306,20 @@ class RemoteController(QObject):
             return
         if b.press:
             self.send(b.press, name)
-            if b.repeat_ms > 0:
-                t = QTimer(self)
-                t.timeout.connect(partial(self.send, b.press, f"{name} (repeat)"))
-                t.start(b.repeat_ms)
-                self._repeat[name] = t
+        self.apply_display_action(b.display_press)
+        relative_speed = isinstance(b.display_press.get("speed"), str)
+        if b.repeat_ms > 0 and (b.press or relative_speed):
+            t = QTimer(self)
+            t.timeout.connect(partial(self._on_repeat, name, b))
+            t.start(b.repeat_ms)
+            self._repeat[name] = t
+
+    def _on_repeat(self, name: str, b):
+        if b.press:
+            self.send(b.press, f"{name} (repeat)")
+        # Only relative speed changes repeat; toggles would just flicker.
+        if isinstance(b.display_press.get("speed"), str):
+            self.apply_display_action({"speed": b.display_press["speed"]})
 
     def _on_release(self, name: str):
         t = self._repeat.pop(name, None)
@@ -222,8 +327,11 @@ class RemoteController(QObject):
             t.stop()
             t.deleteLater()
         b = self.cfg.buttons.get(name) if self.cfg else None
-        if b and b.release:
+        if not b:
+            return
+        if b.release:
             self.send(b.release, f"{name} release")
+        self.apply_display_action(b.display_release)
 
     def handle_key(self, event, pressed: bool) -> bool:
         name = self._key_map.get(_key_int(event.key()))
@@ -309,6 +417,7 @@ class RemoteController(QObject):
             self.connection_changed.emit(False)
             return False
         self._last_error = ""
+        self._last_rx = None
         self._rx_timer.start()
         self.log.emit("info", f"Sending to {self.link.description}")
         self.connection_changed.emit(True)
@@ -322,6 +431,8 @@ class RemoteController(QObject):
             self.send(self.cfg.behavior.stop_command, "stop (disconnect)")
         self._rx_timer.stop()
         self.link.close()
+        self._last_rx = None
+        self._check_status()
         self.log.emit("info", "Disconnected")
         self.connection_changed.emit(False)
         self.changed.emit()
@@ -332,8 +443,10 @@ class RemoteController(QObject):
 
     def _poll_rx(self):
         packets = self.link.read_available()
-        if not self.cfg.udp.show_rx:
+        if not packets:
             return
+        self._last_rx = time.monotonic()
+        log_telemetry = self.display_settings.log_telemetry
         for data, (ip, port) in packets:
             data = data.rstrip(b"\r\n")
             try:
@@ -341,8 +454,12 @@ class RemoteController(QObject):
                 if not text.isprintable():
                     raise ValueError
             except ValueError:
-                text = "hex " + data.hex(" ").upper()
-            self.log.emit("rx", f"{ip}:{port}: {text}")
+                text = None
+            is_telemetry = text is not None and self.apply_telemetry(text)
+            if self.cfg.udp.show_rx and (log_telemetry or not is_telemetry):
+                shown = text if text is not None else "hex " + data.hex(" ").upper()
+                self.log.emit("rx", f"{ip}:{port}: {shown}")
+        self._check_status()
 
     def shutdown(self):
         self.release_all("closing", send_stop=not self.link.is_open)

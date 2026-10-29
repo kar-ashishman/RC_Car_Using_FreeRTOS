@@ -36,6 +36,34 @@ Safety: if the window loses focus, the remote releases every held button, which 
 `release` commands, and then sends `behavior.stop_command`. It also sends the stop command when it
 disconnects or closes.
 
+## Display (touchpad screen)
+
+The touchpad acts as the remote's dashboard:
+
+| Item | Shows |
+|---|---|
+| ◀ ▶ arrows (top corners) | Left/right indicator, blinking green. Both arrows blink for hazard lights. |
+| Signal bars + text (top) | Link status: **ONLINE** (the car replied within `link_timeout_ms`), **NO REPLY** (link open but the car is silent), **OFFLINE** (not connected), **UDP OPEN** (`link_timeout_ms` is 0, so replies aren't expected). The light bars on either side use the same colour. |
+| Big number + bar | Vehicle speed and unit. The bar fills up to `display.speed_max`. It shows `--` until a value is known, and turns grey when the car stops replying because the value is out of date. |
+| Pill (bottom) | **BOOST ON** (orange) or **BOOST OFF** |
+
+The display can be updated in two ways. Whichever update arrives last wins.
+
+1. **Telemetry from the car (recommended).** The car sends UDP packets back to the remote, for
+   example `SPD:42;IND:L;BST:1`. Each token is `KEY:VALUE` or `KEY=VALUE`. Tokens can be separated
+   by `;`, `,` or spaces, can come in any order, and you can send any subset of them.
+   * `SPD`: speed as a number, such as `42` or `12.5`
+   * `IND`: indicator, one of `L`, `R`, `H` (hazard) or `OFF`. `LEFT`, `RIGHT`, `HAZARD`, `BOTH` and `0` also work.
+   * `BST`: boost, `1`/`0`, `ON`/`OFF` or `TRUE`/`FALSE`
+
+   You can rename the keys in `display.telemetry_keys`. Packets that carry telemetry aren't written
+   to the log unless `log_telemetry` is true.
+2. **Button display actions** (works without telemetry): add `display_press` and/or
+   `display_release` to a button. See the table below.
+
+The link status comes from *any* packet the car sends. The default config sends a `PING`
+heartbeat every 500 ms. Have the car reply to it, ideally with its telemetry.
+
 ## config.json
 
 The app reloads the file automatically when you save it. You can also click **Reload config**.
@@ -53,6 +81,8 @@ Valid names are `dpad_up/down/left/right`, `triangle`, `circle`, `cross`, `squar
 | `release` | Command sent when the button is released (empty = nothing). Example: `"S"` to stop when you let go of throttle. |
 | `repeat_ms` | If > 0, `press` is re-sent at this interval while the button is held |
 | `description` | Text shown in the tooltip |
+| `display_press` | Optional display change on press: `{"boost": true \| false \| "toggle"}`, `{"indicator": "left" \| "right" \| "hazard" \| "off"}` (choosing the indicator that's already on switches it off), `{"speed": 30}` (set) or `{"speed": "+5"}` (change). With `repeat_ms`, relative speed changes repeat too. |
+| `display_release` | Same format, applied on release. For example, `{"boost": false}` |
 
 ### Command format
 Each command is sent as **one UDP packet**.
@@ -88,12 +118,24 @@ silently while connected; useful for a fail-safe timeout on the car), and `show_
 
 Keys starting with `_` (for example `"_comment"`) are ignored, so you can use them as comments.
 
+### `display`
+| Field | Meaning |
+|---|---|
+| `speed_unit` | Text shown under the speed, for example `km/h`, `m/s` or `RPM` |
+| `speed_max` | Speed at which the bar is full. Speeds set by buttons are capped at this value. |
+| `speed_decimals` | Number of decimal places shown (0–3) |
+| `link_timeout_ms` | Status shows **NO REPLY** if the car has been silent this long. Set to `0` if the car never replies. |
+| `blink_ms` | Indicator blink period |
+| `log_telemetry` | Also write telemetry packets to the log |
+| `telemetry_keys` | Names of the telemetry keys: `{"speed": "SPD", "indicator": "IND", "boost": "BST"}`. Set a key to `""` to ignore it. |
+
 ## Car side (ESP32 / ESP8266 Arduino example)
 ```cpp
 #include <WiFi.h>          // ESP8266: <ESP8266WiFi.h>
 #include <WiFiUdp.h>
 WiFiUDP udp;
 char buf[64];
+int speedKmh = 0; char ind = 'O'; bool boost = false;   // update these from your sensors/logic
 void setup() {
   WiFi.softAP("RC-CAR", "12345678");   // car becomes 192.168.4.1
   udp.begin(4210);
@@ -104,13 +146,20 @@ void loop() {
     n = udp.read(buf, sizeof(buf) - 1); buf[n] = 0;
     String cmd(buf);
     if (cmd == "F") { /* forward */ } else if (cmd == "S") { /* stop */ }
-    udp.beginPacket(udp.remoteIP(), udp.remotePort()); udp.print("ACK " + cmd); udp.endPacket();
+    else if (cmd == "BOOST") boost = true; else if (cmd == "BOOST_OFF") boost = false;
+    else if (cmd == "IND_L") ind = (ind == 'L') ? 'O' : 'L';
+    else if (cmd == "IND_R") ind = (ind == 'R') ? 'O' : 'R';
+    else if (cmd == "IND_H") ind = (ind == 'H') ? 'O' : 'H';
+    // Reply to every packet (including the PING heartbeat) with telemetry for the display
+    udp.beginPacket(udp.remoteIP(), udp.remotePort());
+    udp.printf("SPD:%d;IND:%s;BST:%d", speedKmh, ind == 'O' ? "OFF" : String(ind).c_str(), boost);
+    udp.endPacket();
   }
 }
 ```
 
 ## Files
 * `rc_remote.py`: the main window, key handling, button logic, and UDP sending
-* `dualsense_widget.py`: draws the controller and handles mouse input
+* `dualsense_widget.py`: draws the controller and the touchpad display, and handles mouse input
 * `config_loader.py`: loads and validates the config, and encodes commands
 * `udp_link.py`: non-blocking UDP socket wrapper
