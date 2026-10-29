@@ -8,8 +8,8 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
-#define WIFI_SSID     "WIFINAME"
-#define WIFI_PASSWORD "WIFIPASSWORD"
+#define WIFI_SSID     "Vishnu's S23"
+#define WIFI_PASSWORD "8971741307"
 
 class WifiDriver final {
     public:

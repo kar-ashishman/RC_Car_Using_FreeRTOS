@@ -9,8 +9,9 @@
 void setup() {
     Serial.begin(115200);
     wifiDriver.connect();
+    wifiDriver.receiveUDP();
 }
 
 void loop() {
-    wifiDriver.receiveUDP();
+    
 }
