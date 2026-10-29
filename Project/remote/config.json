@@ -1,0 +1,59 @@
+{
+  "udp": {
+    "host": "192.168.4.1",
+    "port": 4210,
+    "local_port": 0,
+    "line_ending": "",
+    "encoding": "ascii",
+    "auto_connect": false,
+    "show_rx": true
+  },
+
+  "behavior": {
+    "stop_command": "S",
+    "send_stop_on_focus_loss": true,
+    "heartbeat_command": "",
+    "heartbeat_interval_ms": 0,
+    "show_key_labels": true
+  },
+
+  "analog_sticks": {
+    "left":  { "command": "", "interval_ms": 50, "range": 100, "invert_y": true },
+    "right": { "command": "", "interval_ms": 50, "range": 100, "invert_y": true }
+  },
+
+  "buttons": {
+    "left_stick_up":    { "key": "W", "press": "F",  "release": "S", "repeat_ms": 0, "description": "Throttle forward" },
+    "left_stick_down":  { "key": "S", "press": "B",  "release": "S", "repeat_ms": 0, "description": "Reverse" },
+    "left_stick_left":  { "key": "",  "press": "",   "release": "",  "repeat_ms": 0 },
+    "left_stick_right": { "key": "",  "press": "",   "release": "",  "repeat_ms": 0 },
+
+    "right_stick_up":    { "key": "",  "press": "",  "release": "",  "repeat_ms": 0 },
+    "right_stick_down":  { "key": "",  "press": "",  "release": "",  "repeat_ms": 0 },
+    "right_stick_left":  { "key": "A", "press": "L", "release": "C", "repeat_ms": 0, "description": "Steer left" },
+    "right_stick_right": { "key": "D", "press": "R", "release": "C", "repeat_ms": 0, "description": "Steer right" },
+
+    "dpad_up":    { "key": "Up",    "press": "SPD+",   "release": "", "repeat_ms": 250, "description": "Speed up (repeats while held)" },
+    "dpad_down":  { "key": "Down",  "press": "SPD-",   "release": "", "repeat_ms": 250, "description": "Speed down (repeats while held)" },
+    "dpad_left":  { "key": "Left",  "press": "TRIM-L", "release": "", "repeat_ms": 0,   "description": "Steering trim left" },
+    "dpad_right": { "key": "Right", "press": "TRIM-R", "release": "", "repeat_ms": 0,   "description": "Steering trim right" },
+
+    "triangle": { "key": "L",     "press": "LIGHTS",    "release": "",         "repeat_ms": 0, "description": "Toggle headlights" },
+    "circle":   { "key": "H",     "press": "HORN_ON",   "release": "HORN_OFF", "repeat_ms": 0, "description": "Horn while held" },
+    "cross":    { "key": "Space", "press": "STOP",      "release": "",         "repeat_ms": 0, "description": "Emergency stop" },
+    "square":   { "key": "K",     "press": "INDICATOR", "release": "",         "repeat_ms": 0, "description": "Indicators" },
+
+    "l1": { "key": "Q", "press": "GEAR-", "release": "", "repeat_ms": 0, "description": "Gear down" },
+    "r1": { "key": "E", "press": "GEAR+", "release": "", "repeat_ms": 0, "description": "Gear up" },
+    "l2": { "key": "Z", "press": "BRAKE", "release": "BRAKE_OFF", "repeat_ms": 0, "description": "Brake while held" },
+    "r2": { "key": "X", "press": "BOOST", "release": "BOOST_OFF", "repeat_ms": 0, "description": "Boost while held" },
+    "l3": { "key": "C", "press": "CAM",    "release": "", "repeat_ms": 0, "description": "Left stick click (right-click the stick)" },
+    "r3": { "key": "V", "press": "CENTER", "release": "", "repeat_ms": 0, "description": "Right stick click (right-click the stick)" },
+
+    "create":   { "key": "1", "press": "MODE",  "release": "", "repeat_ms": 0 },
+    "options":  { "key": "2", "press": "MENU",  "release": "", "repeat_ms": 0 },
+    "ps":       { "key": "P", "press": "PAIR",  "release": "", "repeat_ms": 0 },
+    "touchpad": { "key": "T", "press": "TOUCH", "release": "", "repeat_ms": 0 },
+    "mute":     { "key": "M", "press": "MUTE",  "release": "", "repeat_ms": 0 }
+  }
+}
