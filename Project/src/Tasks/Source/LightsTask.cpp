@@ -22,8 +22,8 @@ void LightsTask::updateRoutine() {
     while (true) {
         // Critical Section
         {   
-            //LockGuard<Mutex> lock(serialMutex);
-            std::unique_ptr<LockGuard<Mutex>> lock = std::make_unique<LockGuard<Mutex>>(serialMutex);
+            //LockGuard<Mutex> lock(serialMutex,portMAX_DELAY);
+            std::unique_ptr<LockGuard<Mutex>> lock = std::make_unique<LockGuard<Mutex>>(serialMutex,portMAX_DELAY);
             Serial.println("Light control task running");
         }
         vTaskDelay(getTaskRate());

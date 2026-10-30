@@ -5,9 +5,9 @@
 
 class Mutex {
     public:
-        Mutex(long unsigned int timeOut);
+        Mutex();
         ~Mutex();
-        bool lock();
+        bool lock(long unsigned int timeOut);
         void unlock();
     
     private:

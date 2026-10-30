@@ -21,7 +21,7 @@ void MotorTask::updateRoutine() {
     while (true) {
         // Critical Section
         {   
-            LockGuard<Mutex> lock(serialMutex);
+            LockGuard<Mutex> lock(serialMutex,portMAX_DELAY);
             Serial.println("Motor control task running");
         }
         vTaskDelay(getTaskRate());

@@ -1,8 +1,7 @@
 #include "src/Guards/Includes/Mutex.hpp"
 
-Mutex::Mutex(long unsigned int timeOut = portMAX_DELAY) : 
-    handle_(xSemaphoreCreateMutex()),
-    timeOut_(timeOut) {}
+Mutex::Mutex() : 
+    handle_(xSemaphoreCreateMutex()) {}
 
 Mutex::~Mutex() {
     if (handle_ != nullptr) {
@@ -11,8 +10,8 @@ Mutex::~Mutex() {
     }
 }
 
-bool Mutex::lock() {
-    return xSemaphoreTake(handle_, timeOut_) == pdPASS;
+bool Mutex::lock(long unsigned int timeOut) {
+    return xSemaphoreTake(handle_, timeOut) == pdPASS;
 }
 
 void Mutex::unlock() {

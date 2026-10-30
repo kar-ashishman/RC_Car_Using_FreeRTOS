@@ -9,7 +9,7 @@ SemTestTask2::SemTestTask2():Task(
         "SemtestTask2", 
         2048, 
         nullptr, 
-        2, 
+        1, 
         nullptr, 
         CoreId::CONTROL_CORE,
         1000
@@ -21,14 +21,11 @@ SemTestTask2::~SemTestTask2() {
 
 void SemTestTask2::updateRoutine() {
     while (true) {
-        // Critical Section
-        {   
-            LockGuard<Semaphore> lock(serialSemaphore);
-            if(serialSemaphore.lock()){
-                Serial.println("Semaphore test task 2 running");
-            } 
-            LockGuard<Semaphore> unlock(serialSemaphore);
-        }
+        // Critical Section 
+        {
+            LockGuard<Semaphore> lock(serialSemaphore,0xFFFF);
+            Serial.println("Semaphore test task 2 running");
+        }  
         vTaskDelay(getTaskRate());
     }
 }

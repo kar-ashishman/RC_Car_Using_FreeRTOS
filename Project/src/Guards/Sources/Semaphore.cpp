@@ -12,8 +12,8 @@ Semaphore::~Semaphore() {
     }
 }
 
-bool Semaphore::lock() {
-    return xSemaphoreTake(handle_,timeOut_) == pdTRUE;
+bool Semaphore::lock(long unsigned int timeOut) {
+    return xSemaphoreTake(handle_,timeOut) == pdTRUE;
 };
 
 bool Semaphore::unlock() {
@@ -30,8 +30,4 @@ bool Semaphore::lockFromISR(BaseType_t *higherPriorityTaskWoken) {
 
 bool Semaphore::unlockFromISR(BaseType_t *higherPriorityTaskWoken) {
     return xSemaphoreGiveFromISR(handle_,higherPriorityTaskWoken)==pdTRUE;
-}
-
-void Semaphore::setTimeout(long unsigned int timeOut) {
-    timeOut_ = timeOut;
 }
