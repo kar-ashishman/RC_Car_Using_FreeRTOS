@@ -1,0 +1,31 @@
+#include "src/Tasks/Includes/HornTask.hpp"
+#include "src/Services/Includes/HornDriver.hpp"
+#include "Arduino.h"
+#include "src/Guards/Includes/LockGuard.hpp"
+#include "src/Includes/GlobalData.hpp"
+#include <memory>
+
+HornTask::HornTask() : Task(
+        "HornTask", 
+        2048, 
+        nullptr, 
+        1, 
+        nullptr, 
+        CoreId::CONTROL_CORE,
+        1000
+    ) {}
+
+HornTask::~HornTask() {
+    vTaskDelete(nullptr);
+}
+
+void HornTask::updateRoutine() {
+    while(true)
+    {   
+        std::unique_ptr<HornDriver> horn = std::make_unique<HornDriver>(2);
+        horn->hornON();
+        vTaskDelay(2000);
+        horn->hornOFF();
+        vTaskDelay(2000);
+    }   
+}

@@ -23,7 +23,7 @@ void SemTestTask2::updateRoutine() {
     while (true) {
         // Critical Section 
         {
-            LockGuard<Semaphore> lock(serialSemaphore,0xFFFF);
+            LockGuard<Semaphore> lock(serialSemaphore,portMAX_DELAY);
             Serial.println("Semaphore test task 2 running");
         }  
         vTaskDelay(getTaskRate());

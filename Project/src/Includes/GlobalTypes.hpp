@@ -12,3 +12,10 @@ enum class Direction {
     STOP = 0,
     FORWARD = 1
 };
+
+enum class Indicator{
+    NONE = 0,
+    LEFT = 1,
+    RIGHT = 2,
+    HAZARD = 3
+};
