@@ -5,11 +5,10 @@
 
 void setup() {
     Serial.begin(115200);
+    MotorTask motorTask;
+    configASSERT(motorTask.taskCreate());
+    while(true);
 }
 
 void loop() {
-    MotorTask motorTask;
-    configASSERT(motorTask.taskCreate());
-    LightsTask lightsTask;
-    configASSERT(lightsTask.taskCreate());
 }
