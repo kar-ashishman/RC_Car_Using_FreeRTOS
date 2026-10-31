@@ -3,7 +3,7 @@ import time
 # ESP32 default IP and Application selected PORT
 DESTINATION_IP = "192.168.1.10"
 DESTINATION_PORT = 5000
-MESSAGE = b"\x10"
+MESSAGE = b"\x40"
 
 # Sending 10 UDP messages at 100ms gap
 
@@ -13,7 +13,7 @@ with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as udp_socket:
 		print("sending")
 		udp_socket.sendto(MESSAGE, (DESTINATION_IP, DESTINATION_PORT))
 		data, addr = udp_socket.recvfrom(1024)
-		print(data)
+		print(hex((int.from_bytes(data, byteorder="big"))))
 		time.sleep(0.3)
 
 
