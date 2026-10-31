@@ -8,15 +8,15 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
-#define WIFI_SSID     "Vishnu's S23"
-#define WIFI_PASSWORD "8971741307"
+#define WIFI_SSID     "*******"
+#define WIFI_PASSWORD "*******"
 
 class WifiDriver final {
     public:
     WifiDriver() = default;
     ~WifiDriver(); // Disconnect
     void connect(); // Connect to WiFi
-    void receiveUDP();
+    int receiveUDP();
     uint8_t getBuffer() { return buffer_; }
     void sendUDP(const uint8_t& data, 
         const auto& ip, const uint16_t port);

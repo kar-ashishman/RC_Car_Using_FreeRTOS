@@ -28,27 +28,17 @@ void WifiDriver::connect() {
     Serial.printf("\nListening on UDP port %d\n", port_);
 }
 
-void WifiDriver::receiveUDP() {
-    while(1) {
-        struct sockaddr_in remoteAddr;
-        socklen_t addrLen = sizeof(remoteAddr);
-        int len = recvfrom(sock_, 
-                            &buffer_, 
-                            sizeof(buffer_), 
-                            0, 
-                            (struct sockaddr *)&remoteAddr, 
-                            &addrLen);
-        if (len > 0) {
-            // Process received data
-            {
-                {   
-                    LockGuard<Mutex> lock(serialMutex);
-                    Serial.write(getBuffer());
-                    Serial.println();
-                }
-            }
-        }
-    }
+// Returns 0 if request timesout when no data is available
+int WifiDriver::receiveUDP() {
+    struct sockaddr_in remoteAddr;
+    socklen_t addrLen = sizeof(remoteAddr);
+    int len = recvfrom(sock_, 
+                        &buffer_, 
+                        sizeof(buffer_), 
+                        MSG_DONTWAIT, 
+                        (struct sockaddr *)&remoteAddr, 
+                        &addrLen);
+    return (len > 0);
 }
 
 void WifiDriver::sendUDP(
