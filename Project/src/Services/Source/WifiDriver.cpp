@@ -38,12 +38,12 @@ int WifiDriver::receiveUDP() {
                         MSG_DONTWAIT, 
                         (struct sockaddr *)&remoteAddr, 
                         &addrLen);
-    return (len > 0);
+    return len;
 }
 
 void WifiDriver::sendUDP(
-    const uint8_t& data, const auto& ip, const uint16_t port) {
-     int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_IP);
+    const uint8_t& data, const char* ip, const uint16_t port) {
+    int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_IP);
     struct sockaddr_in remoteAddr;
     remoteAddr.sin_family = AF_INET;
     remoteAddr.sin_port = htons(port);
