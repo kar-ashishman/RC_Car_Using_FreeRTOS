@@ -1,7 +1,15 @@
 #include "src/Guards/Includes/Mutex.hpp"
+#include "src/Guards/Includes/Semaphore.hpp"
 #include "freertos/FreeRTOS.h"
-#include "src/Services/Includes/WifiDriver.hpp"
+#include "src/Includes/GlobalTypes.hpp"
+#include <stdint.h>
 
-Mutex serialMutex(portMAX_DELAY);
-WifiDriver wifiDriver;
+Mutex serialMutex;
+/*Create Semaphore with maxCount 2, and Initial Count 2*/
+Semaphore serialSemaphore(2,2);
+
+/*Indicator status*/
+Indicator indicatorStatus = Indicator::LEFT;
+
+
 
