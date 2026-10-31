@@ -10,7 +10,6 @@ HornTask::HornTask() : Task(
         2048, 
         nullptr, 
         1, 
-        nullptr, 
         CoreId::CONTROL_CORE,
         1000
     ) {}

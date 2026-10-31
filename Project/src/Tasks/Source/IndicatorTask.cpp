@@ -9,8 +9,7 @@ IndicatorTask::IndicatorTask() : Task(
         "IndicatorTask", 
         2048, 
         nullptr, 
-        1, 
-        nullptr, 
+        1,
         CoreId::CONTROL_CORE,
         1000
     ) {}
