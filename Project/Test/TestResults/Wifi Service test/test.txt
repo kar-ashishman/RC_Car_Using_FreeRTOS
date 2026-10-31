@@ -1,0 +1,34 @@
+ESP on powerup prints some log.
+As soon as we get a up wifi network we print wifi connected and we print ESP's ip address.
+and PORT.
+Followed by this ESP waits in a continuous loop for receiving UDP messages
+For now the test buffer is 1 byte, (can be changed in the actual software)
+
+In the test, some test bytes are received and printed. 
+For now the receive driver prints data to the serial monitor,
+It will be edited later for processing the wifi data and pushing data to a queue.
+
+Wifi data output
+================
+
+ets Jul 29 2019 12:21:46
+
+rst:0x1 (POWERON_RESET),boot:0x13 (SPI_FAST_FLASH_BOOT)
+configsip: 0, SPIWP:0xee
+clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00
+mode:DIO, clock div:1
+load:0x3fff0030,len:4876
+ho 0 tail 12 room 4
+load:0x40078000,len:16532
+load:0x40080400,len:3500
+entry 0x400805b4
+WiFi connected
+
+ESP32 IP: 172.16.42.123
+
+Listening on UDP port 5000
+F
+S
+S
+G
+S
