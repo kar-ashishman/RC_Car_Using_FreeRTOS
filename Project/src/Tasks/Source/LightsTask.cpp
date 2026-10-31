@@ -3,29 +3,32 @@
 #include "src/Guards/Includes/LockGuard.hpp"
 #include "src/Includes/GlobalData.hpp"
 #include <memory>
+#include "src/Includes/Notify.hpp"
 
 LightsTask::LightsTask() : Task(
         "LightsTask", 
         2048, 
         nullptr, 
         1, 
-        nullptr, 
         CoreId::CONTROL_CORE,
         2000
-    ) {}
+    ) {
+        pinMode(2, OUTPUT);
+    }
 
 LightsTask::~LightsTask() {
-    vTaskDelete(nullptr);
+    Serial.println("Deleting Lights");
+    digitalWrite(2, LOW);
+    if(taskHandle_ != nullptr) vTaskDelete(taskHandle_);
 }
 
 void LightsTask::updateRoutine() {
+    static char state = 0;
+    Serial.println("Waiting for notification");
+    Notify::waitForNotification();
     while (true) {
-        // Critical Section
-        {   
-            //LockGuard<Mutex> lock(serialMutex);
-            std::unique_ptr<LockGuard<Mutex>> lock = std::make_unique<LockGuard<Mutex>>(serialMutex);
-            Serial.println("Light control task running");
-        }
-        vTaskDelay(getTaskRate());
+        state = state ^ 1;
+        digitalWrite(2, state);
+        vTaskDelay(500);
     }
 }

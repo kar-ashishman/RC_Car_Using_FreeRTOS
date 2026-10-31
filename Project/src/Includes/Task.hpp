@@ -34,7 +34,6 @@ public:
         const uint32_t stackDepth_,
         void* const parameters_,
         UBaseType_t priority_,
-        TaskHandle_t* const taskHandle_,
         const CoreId coreId_,
         const uint16_t taskRate_ 
     );
@@ -47,13 +46,14 @@ public:
     static void taskEntry(void* thisTask);
 
     uint16_t getTaskRate();
+    TaskHandle_t getHandle();
 
 protected:
     const char * const taskName_;
     const uint32_t stackDepth_;
     void * const parameters_;
     UBaseType_t priority_;
-    TaskHandle_t * const taskHandle_;
+    TaskHandle_t taskHandle_;
     const CoreId coreId_;
     const uint16_t taskRate_;
 
