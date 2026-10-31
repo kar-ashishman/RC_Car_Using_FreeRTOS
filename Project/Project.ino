@@ -26,8 +26,8 @@ void setup() {
     //configASSERT(hornTask.taskCreate());
 
     /*Indicator Test*/
-    IndicatorTask indicatorTask;
-    configASSERT(indicatorTask.taskCreate());
+    //IndicatorTask indicatorTask;
+    //configASSERT(indicatorTask.taskCreate());
 }
 
 void loop() {

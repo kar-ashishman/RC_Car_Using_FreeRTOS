@@ -12,3 +12,21 @@ void HornDriver::hornOFF(){
     digitalWrite(hornPin_,LOW);
 }
 
+uint8_t HornDriver::getPin(){
+    return hornPin_;
+}
+
+DancingHorn::DancingHorn(uint8_t pin):
+    HornDriver(pin){}
+
+void DancingHorn::Dance(){
+    digitalWrite(getPin(),HIGH);
+    vTaskDelay(500);
+    digitalWrite(getPin(),LOW);
+    vTaskDelay(200);
+    digitalWrite(getPin(),HIGH);
+    vTaskDelay(1000);
+    digitalWrite(getPin(),LOW);
+    vTaskDelay(500);
+}
+

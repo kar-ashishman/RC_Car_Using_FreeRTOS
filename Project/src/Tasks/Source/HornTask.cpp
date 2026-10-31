@@ -22,10 +22,7 @@ HornTask::~HornTask() {
 void HornTask::updateRoutine() {
     while(true)
     {   
-        std::unique_ptr<HornDriver> horn = std::make_unique<HornDriver>(2);
-        horn->hornON();
-        vTaskDelay(2000);
-        horn->hornOFF();
-        vTaskDelay(2000);
+        std::unique_ptr<DancingHorn> horn = std::make_unique<DancingHorn>(2);
+        horn->Dance();
     }   
 }

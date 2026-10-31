@@ -9,7 +9,7 @@ Mutex serialMutex;
 Semaphore serialSemaphore(2,2);
 
 /*Indicator status*/
-Indicator indicatorStatus = Indicator::NONE;
+Indicator indicatorStatus = Indicator::LEFT;
 
 
 

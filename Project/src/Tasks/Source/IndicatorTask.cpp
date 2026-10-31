@@ -1,5 +1,5 @@
 #include "src/Tasks/Includes/IndicatorTask.hpp"
-#include "src/Services/Includes/IndicatorDriver.hpp"
+#include "src/Services/Includes/LightDriver.hpp"
 #include "Arduino.h"
 #include "src/Guards/Includes/LockGuard.hpp"
 #include "src/Includes/GlobalData.hpp"
@@ -22,41 +22,28 @@ IndicatorTask::~IndicatorTask() {
 void IndicatorTask::updateRoutine() {
     while(true)
     {   
-        std::unique_ptr<IndicatorDriver> indicator = std::make_unique<IndicatorDriver>(2,2);
+        std::unique_ptr<LeftIndicator> l_ind = std::make_unique<LeftIndicator>(2);
+        std::unique_ptr<RightIndicator> r_ind = std::make_unique<RightIndicator>(2);
         switch(indicatorStatus)
         {
             case Indicator::LEFT:
-                indicator->setLeftIndicatorON();
-                vTaskDelay(500);
-                indicator->setLeftIndicatorOFF();
-                vTaskDelay(500);
+                l_ind->lightON(500);
+                r_ind->lightOFF();
                 break;
-
+            
             case Indicator::RIGHT:
-                //std::unique_ptr<IndicatorDriver> indicator = std::make_unique<IndicatorDriver>(2,2);
-                indicator->setRightIndicatorON();
-                vTaskDelay(500);
-                indicator->setRightIndicatorOFF();
-                vTaskDelay(500);
+                r_ind->lightON(500);
+                l_ind->lightOFF();
                 break;
-
+            
             case Indicator::HAZARD:
-                //std::unique_ptr<IndicatorDriver> indicator = std::make_unique<IndicatorDriver>(2,2);
-                indicator->setLeftIndicatorON();
-                vTaskDelay(500);
-                indicator->setLeftIndicatorOFF();
-                vTaskDelay(500);
-
-                indicator->setRightIndicatorON();
-                vTaskDelay(500);
-                indicator->setRightIndicatorOFF();
-                vTaskDelay(500);
+                l_ind->lightON(500);
+                r_ind->lightON(500);
                 break;
 
             default:
-                indicator->setLeftIndicatorOFF();
-                indicator->setRightIndicatorOFF();
-
+                l_ind->lightOFF();
+                r_ind->lightOFF();
         }
         
     }   
