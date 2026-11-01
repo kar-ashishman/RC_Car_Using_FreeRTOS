@@ -49,8 +49,8 @@
     "dpad_right": { "key": "Right", "press": "TRIM-R", "release": "", "repeat_ms": 0,   "description": "Steering trim right" },
 
     "triangle": { "key": "L",     "press": "LIGHTS",    "release": "",         "repeat_ms": 0, "description": "Toggle headlights" },
-    "circle":   { "key": "H",     "press": "HORN_ON",   "release": "HORN_OFF", "repeat_ms": 0, "description": "Horn while held" },
-    "cross":    { "key": "Space", "press": "STOP",      "release": "",         "repeat_ms": 0, "description": "Emergency stop" },
+    "circle":   { "key": "H",     "press": "H",   "release": "J", "repeat_ms": 0, "description": "Horn while held" },
+    "cross":    { "key": "Space", "press": "K",      "release": "J",         "repeat_ms": 0, "description": "Emergency stop" },
     "square":   { "key": "K",     "press": "IND_H",     "release": "",         "repeat_ms": 0, "description": "Hazard lights (toggle)",
                   "display_press": { "indicator": "hazard" } },
 

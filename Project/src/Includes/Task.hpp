@@ -16,9 +16,7 @@ Description:
     UBaseType_t uxPriority,
     TaskHandle_t * const pxCreatedTask,
     const BaseType_t xCoreID)
-
 */
-
 
 #pragma once
 
@@ -26,13 +24,13 @@ Description:
 #include "freertos/task.h"
 #include "src/Includes/GlobalTypes.hpp"
 #include <stdint.h>
+#include <memory>
 
 class Task {
 public:
     Task(
         const char* const taskName_,
         const uint32_t stackDepth_,
-        void* const parameters_,
         UBaseType_t priority_,
         const CoreId coreId_,
         const uint16_t taskRate_ 
@@ -48,10 +46,18 @@ public:
     uint16_t getTaskRate();
     TaskHandle_t getHandle();
 
+    void updateParam(Signals& signal) {
+        signal_ = signal;
+    }
+
+    Signals getParam() {
+        return signal_;
+    }
+
 protected:
     const char * const taskName_;
     const uint32_t stackDepth_;
-    void * const parameters_;
+    Signals signal_ = Signals::NONE;
     UBaseType_t priority_;
     TaskHandle_t taskHandle_;
     const CoreId coreId_;

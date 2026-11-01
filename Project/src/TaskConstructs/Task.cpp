@@ -15,13 +15,11 @@ Description:
 Task::Task(
     const char * const taskName_,
     const uint32_t stackDepth_,
-    void * const parameters_,
     UBaseType_t priority_,
     const CoreId coreId_,
     const uint16_t taskRate_ = 0) :
         taskName_(taskName_),
         stackDepth_(stackDepth_),
-        parameters_(parameters_),
         priority_(priority_),
         coreId_(coreId_),
         taskRate_(taskRate_),

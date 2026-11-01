@@ -3,7 +3,7 @@ import time
 # ESP32 default IP and Application selected PORT
 DESTINATION_IP = "192.168.1.10"
 DESTINATION_PORT = 5000
-MESSAGE = b"\x40"
+MESSAGE = b"\x04"
 
 # Sending 10 UDP messages at 100ms gap
 

@@ -8,7 +8,6 @@
 MotorTask::MotorTask() : Task(
         "MotorTask", 
         2048, 
-        nullptr, 
         1, 
         CoreId::CONTROL_CORE,
         1000
@@ -19,7 +18,6 @@ MotorTask::~MotorTask() {
 }
 
 void MotorTask::updateRoutine() {
-    
     LightsTask* lt = new LightsTask;
     vTaskDelay(3000);
     lt->taskCreate();
