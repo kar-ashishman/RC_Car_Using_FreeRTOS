@@ -1,32 +1,26 @@
 #include "src/Services/Includes/HornDriver.hpp"
+#include "src/Tasks/Includes/HornTask.hpp"
 #include "Arduino.h"
 
-HornDriver::HornDriver(uint8_t pin):
-            hornPin_(pin){}
-
-void HornDriver::hornON(){
-    digitalWrite(hornPin_,HIGH);
+void HornDriver::hornOn(uint8_t pin){
+    digitalWrite(pin ,HIGH);
 }
 
-void HornDriver::hornOFF(){
-    digitalWrite(hornPin_,LOW);
+void HornDriver::hornOff(uint8_t pin){
+    digitalWrite(pin ,LOW);
 }
 
-uint8_t HornDriver::getPin(){
-    return hornPin_;
-}
-
-DancingHorn::DancingHorn(uint8_t pin):
-    HornDriver(pin){}
-
-void DancingHorn::Dance(){
-    digitalWrite(getPin(),HIGH);
+void HornDriver::dancingHorn(uint8_t pin, HornTask& hornTask){
+    digitalWrite(pin ,HIGH);
     vTaskDelay(500);
-    digitalWrite(getPin(),LOW);
+    if(hornTask.getParam() == Signals::HORNOFF) {HornDriver::hornOff(pin); return;};
+    digitalWrite(pin ,LOW);
     vTaskDelay(200);
-    digitalWrite(getPin(),HIGH);
+    if(hornTask.getParam() == Signals::HORNOFF) {HornDriver::hornOff(pin); return;}
+    digitalWrite(pin ,HIGH);
     vTaskDelay(1000);
-    digitalWrite(getPin(),LOW);
+    if(hornTask.getParam() == Signals::HORNOFF) {HornDriver::hornOff(pin); return;};
+    digitalWrite(pin ,LOW);
     vTaskDelay(500);
 }
 

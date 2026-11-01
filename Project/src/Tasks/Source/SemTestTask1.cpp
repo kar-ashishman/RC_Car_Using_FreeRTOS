@@ -8,7 +8,6 @@
 SemTestTask1::SemTestTask1():Task(
         "SemtestTask1", 
         2048, 
-        nullptr, 
         1, 
         CoreId::CONTROL_CORE,
         1000

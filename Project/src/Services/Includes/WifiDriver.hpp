@@ -1,4 +1,6 @@
-#pragma once
+#ifndef WIFIDRIVER
+#define WIFIDRIVER
+
 #include <stdint.h>
 #include <WiFi.h>
 #include <WiFiUdp.h>
@@ -8,8 +10,8 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
-#define WIFI_SSID     "*******"
-#define WIFI_PASSWORD "*******"
+#define WIFI_SSID     "Airtel_Ashree"
+#define WIFI_PASSWORD "Music@301"
 
 class WifiDriver final {
     public:
@@ -19,7 +21,7 @@ class WifiDriver final {
     int receiveUDP();
     uint8_t getBuffer() { return buffer_; }
     void sendUDP(const uint8_t& data, 
-        const auto& ip, const uint16_t port);
+        const char* ip, const uint16_t port);
     
     private:
     uint16_t port_ = 5000;
@@ -27,3 +29,5 @@ class WifiDriver final {
     int sock_;
     uint8_t buffer_;
 };
+
+#endif

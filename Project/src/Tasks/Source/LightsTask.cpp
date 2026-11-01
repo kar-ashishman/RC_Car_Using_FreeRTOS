@@ -8,7 +8,6 @@
 LightsTask::LightsTask() : Task(
         "LightsTask", 
         2048, 
-        nullptr, 
         1, 
         CoreId::CONTROL_CORE,
         2000
