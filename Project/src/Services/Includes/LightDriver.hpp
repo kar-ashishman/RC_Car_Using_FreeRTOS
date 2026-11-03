@@ -1,28 +1,33 @@
 #pragma once
 #include <stdint.h>
+#include "src/Tasks/Includes/IndicatorTask.hpp"
 
 class LightDriver{
     public:
-    LightDriver(uint8_t pin);
+    LightDriver() = default;
     ~LightDriver() = default;
-    void lightON(uint16_t delay);
-    void lightOFF();
-    uint8_t getPin();
-
-    private:
-    uint8_t pin_;
+    void static lightON(uint8_t pin, uint16_t delay);
+    void static lightOFF(uint8_t pin);
 };
 
 class LeftIndicator : public LightDriver {
 public:
-    LeftIndicator(uint8_t pin);
-    void lightON(uint16_t delay);
-    void lightOFF();
+    LeftIndicator() = default;
+    void static lightON(uint8_t pin, uint16_t delay, IndicatorTask& indicatorTask);
+    void static lightOFF(uint8_t pin);
 };
 
 class RightIndicator : public LightDriver {
 public:
-    RightIndicator(uint8_t pin);
-    void lightON(uint16_t delay);
-    void lightOFF();
+    RightIndicator() = default;
+    void static lightON(uint8_t pin, uint16_t delay, IndicatorTask& indicatorTask);
+    void static lightOFF(uint8_t pin);
+};
+
+class HeadLight: public LightDriver {
+public:
+    Headlight();
+    ~Headlight() = default;
+    void static lightON(uint8_t pin);
+    void static lightOFF(uint8_t pin);
 };

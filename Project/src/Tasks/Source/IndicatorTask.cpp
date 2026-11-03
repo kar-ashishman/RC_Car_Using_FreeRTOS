@@ -3,6 +3,7 @@
 #include "Arduino.h"
 #include "src/Guards/Includes/LockGuard.hpp"
 #include "src/Includes/GlobalData.hpp"
+#include "src/Includes/Notify.hpp"
 #include <memory>
 
 IndicatorTask::IndicatorTask() : Task(
@@ -10,39 +11,42 @@ IndicatorTask::IndicatorTask() : Task(
         2048,  
         1,
         CoreId::CONTROL_CORE,
-        1000
-    ) {}
+        0
+    ) {
+        pinMode(lPin_, OUTPUT);
+        pinMode(rPin_, OUTPUT);
+    }
 
 IndicatorTask::~IndicatorTask() {
-    vTaskDelete(nullptr);
+    if(taskHandle_ != nullptr) vTaskDelete(taskHandle_);
 }
 
 void IndicatorTask::updateRoutine() {
     while(true)
     {   
-        std::unique_ptr<LeftIndicator> l_ind = std::make_unique<LeftIndicator>(2);
-        std::unique_ptr<RightIndicator> r_ind = std::make_unique<RightIndicator>(2);
-        switch(indicatorStatus)
+        Notify::waitForNotification();
+        switch(signal_)
         {
-            case Indicator::LEFT:
-                l_ind->lightON(500);
-                r_ind->lightOFF();
+            case Signals::IND_LEFT:
+                LeftIndicator::lightON(lPin_,500,*this);
+                RightIndicator::lightOFF(rPin_);
                 break;
             
-            case Indicator::RIGHT:
-                r_ind->lightON(500);
-                l_ind->lightOFF();
+            case Signals::IND_RIGHT:
+                RightIndicator::lightON(rPin_,500,*this);
+                LeftIndicator::lightOFF(lPin_);
                 break;
             
-            case Indicator::HAZARD:
-                l_ind->lightON(500);
-                r_ind->lightON(500);
+            case Signals::HAZARD:
+                LeftIndicator::lightON(lPin_,500,*this);
+                RightIndicator::lightON(rPin_,500,*this);
                 break;
 
-            default:
-                l_ind->lightOFF();
-                r_ind->lightOFF();
+            case Signals::IND_OFF:
+                LeftIndicator::lightOFF(lPin_);
+                RightIndicator::lightOFF(rPin_);
+                break;
         }
-        
+        signal_ = Signals::NONE;
     }   
 }

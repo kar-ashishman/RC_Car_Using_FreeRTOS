@@ -4,7 +4,6 @@
 
 void setup() {
     Serial.begin(115200);
-    
     // Initialize wifi
     WifiDriver wifiDriver;
     wifiDriver.connect();
@@ -17,15 +16,13 @@ void setup() {
     HornTask hornTask;
     configASSERT(hornTask.taskCreate());
 
+    //Create Indicator Control Task
+    IndicatorTask indicatorTask;
+    configASSERT(indicatorTask.taskCreate());
+
     // Create RemoteSignalTask
-    RemoteSignalTask remoteSignalTask(wifiDriver, hornTask);
-    configASSERT(remoteSignalTask.taskCreate());
-
-    
-
-
-    
-    
+    RemoteSignalTask remoteSignalTask(wifiDriver, hornTask, indicatorTask);
+    configASSERT(remoteSignalTask.taskCreate());    
     
     // Infinite Loop
     while(true) {

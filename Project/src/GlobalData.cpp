@@ -9,8 +9,6 @@ Mutex serialMutex;
 /*Create Semaphore with maxCount 2, and Initial Count 2*/
 Semaphore serialSemaphore(2,2);
 
-/*Indicator status*/
-Indicator indicatorStatus = Indicator::LEFT;
 
 
 

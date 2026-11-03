@@ -31,4 +31,8 @@ enum class Signals{
     HORNON = 'H',
     HORNOFF = 'J',
     HORNDANCE = 'K',
+    IND_LEFT = 'L',
+    IND_RIGHT = 'R',
+    HAZARD = 'Z',
+    IND_OFF = 'S'
 };

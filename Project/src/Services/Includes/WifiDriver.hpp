@@ -10,8 +10,8 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
-#define WIFI_SSID     "Airtel_Ashree"
-#define WIFI_PASSWORD "Music@301"
+#define WIFI_SSID     "Vishnu"
+#define WIFI_PASSWORD "Mypass8971"
 
 class WifiDriver final {
     public:

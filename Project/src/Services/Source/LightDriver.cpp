@@ -2,37 +2,41 @@
 #include "Arduino.h"
 #include "src/Includes/Task.hpp"
 
-LightDriver::LightDriver(uint8_t pin):
-             pin_(pin){}
 
-uint8_t LightDriver::getPin(){
-    return pin_;
+void LeftIndicator::lightON(uint8_t pin, uint16_t delay, IndicatorTask& indicatorTask) {
+        while(1){
+           digitalWrite(pin,HIGH);
+           vTaskDelay(delay);
+           if(indicatorTask.getParam() == Signals::IND_OFF) {LeftIndicator::lightOFF(pin); return;};
+           digitalWrite(pin,LOW);
+           vTaskDelay(delay);  
+           if(indicatorTask.getParam() == Signals::IND_OFF) {LeftIndicator::lightOFF(pin); return;};    
+        }  
 }
 
-LeftIndicator::LeftIndicator(uint8_t pin):
-    LightDriver(pin){}
-
-RightIndicator::RightIndicator(uint8_t pin):
-    LightDriver(pin){}
-
-void LeftIndicator::lightON(uint16_t delay) {
-        digitalWrite(getPin(),HIGH);
-        vTaskDelay(delay);
-        digitalWrite(getPin(),LOW);
-        vTaskDelay(delay);
+void RightIndicator::lightON(uint8_t pin, uint16_t delay, IndicatorTask& indicatorTask) {
+        while(1){
+           digitalWrite(pin,HIGH);
+           vTaskDelay(delay);
+           if(indicatorTask.getParam() == Signals::IND_OFF) {LeftIndicator::lightOFF(pin); return;};
+           digitalWrite(pin,LOW);
+           vTaskDelay(delay);
+           if(indicatorTask.getParam() == Signals::IND_OFF) {LeftIndicator::lightOFF(pin); return;};
+        }
 }
 
-void RightIndicator::lightON(uint16_t delay) {
-        digitalWrite(getPin(),HIGH);
-        vTaskDelay(delay);
-        digitalWrite(getPin(),LOW);
-        vTaskDelay(delay);
+void LeftIndicator::lightOFF(uint8_t pin) {
+        digitalWrite(pin,LOW);
 }
 
-void LeftIndicator::lightOFF() {
-        digitalWrite(getPin(),LOW);
+void RightIndicator::lightOFF(uint8_t pin) {
+        digitalWrite(pin,LOW);
 }
 
-void RightIndicator::lightOFF() {
-        digitalWrite(getPin(),LOW);
+void HeadLight::lightON(uint8_t pin) {
+        digitalWrite(pin,HIGH);
+}
+
+void HeadLight::lightOFF(uint8_t pin) {
+        digitalWrite(pin,LOW);
 }

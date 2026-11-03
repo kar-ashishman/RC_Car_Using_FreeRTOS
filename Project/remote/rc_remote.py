@@ -300,11 +300,33 @@ class RemoteController(QObject):
             self.log.emit("info", f"Released all buttons ({reason})")
         self.changed.emit()
 
+    @staticmethod
+    def _is_indicator_toggle(b) -> bool:
+        return b.display_press.get("indicator") not in (None, "off")
+
+    def _send_indicator_off(self, state: str):
+        """Send the release command of the button bound to the given indicator state."""
+        for name, b in self.cfg.buttons.items():
+            if b.display_press.get("indicator") == state:
+                if b.release:
+                    self.send(b.release, f"{name} (indicator off)")
+                return
+
     def _on_press(self, name: str):
         b = self.cfg.buttons.get(name) if self.cfg else None
         if not b:
             return
-        if b.press:
+        if self._is_indicator_toggle(b):
+            if self.display.indicator == b.display_press["indicator"]:
+                # Indicator already on: this press switches it off, so send the release command.
+                self._send_indicator_off(self.display.indicator)
+            else:
+                # Switching indicators: turn the current one off first, then the new one on.
+                if self.display.indicator != "off":
+                    self._send_indicator_off(self.display.indicator)
+                if b.press:
+                    self.send(b.press, name)
+        elif b.press:
             self.send(b.press, name)
         self.apply_display_action(b.display_press)
         relative_speed = isinstance(b.display_press.get("speed"), str)
@@ -329,7 +351,9 @@ class RemoteController(QObject):
         b = self.cfg.buttons.get(name) if self.cfg else None
         if not b:
             return
-        if b.release:
+        # Indicator toggles send their release command on the press that turns them off,
+        # never on button release.
+        if b.release and not self._is_indicator_toggle(b):
             self.send(b.release, f"{name} release")
         self.apply_display_action(b.display_release)
 
