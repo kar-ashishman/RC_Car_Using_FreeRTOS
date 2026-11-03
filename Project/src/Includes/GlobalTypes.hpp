@@ -28,11 +28,11 @@ enum class Signals{
     NONE,
     FORWARD,
     REVERSE,
-    HORNON = 'H',
-    HORNOFF = 'J',
-    HORNDANCE = 'K',
-    IND_LEFT = 'L',
-    IND_RIGHT = 'R',
-    HAZARD = 'Z',
-    IND_OFF = 'S'
+    HORNON = 'HN',
+    HORNOFF = 'HF',
+    HORNDANCE = 'HD',
+    IND_LEFT = 'LI',
+    IND_RIGHT = 'RI',
+    HAZARD = 'HZ',
+    IND_OFF = 'ST'
 };

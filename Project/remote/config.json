@@ -49,9 +49,9 @@
     "dpad_right": { "key": "Right", "press": "TRIM-R", "release": "", "repeat_ms": 0,   "description": "Steering trim right" },
 
     "triangle": { "key": "L",     "press": "LIGHTS",    "release": "",         "repeat_ms": 0, "description": "Toggle headlights" },
-    "circle":   { "key": "H",     "press": "H",   "release": "J", "repeat_ms": 0, "description": "Horn while held" },
+    "circle":   { "key": "H",     "press": "HN",   "release": "HF", "repeat_ms": 0, "description": "Horn while held" },
     "cross":    { "key": "Space", "press": "K",      "release": "J",         "repeat_ms": 0, "description": "Emergency stop" },
-    "square":   { "key": "K",     "press": "Z",     "release": "S",         "repeat_ms": 500, "description": "Hazard lights (toggle)",
+    "square":   { "key": "K",     "press": "HZ",     "release": "ST",         "repeat_ms": 500, "description": "Hazard lights (toggle)",
                   "display_press": { "indicator": "hazard" } },
 
     "l1": { "key": "Q", "press": "GEAR-", "release": "", "repeat_ms": 0, "description": "Gear down" },
@@ -62,9 +62,9 @@
     "l3": { "key": "C", "press": "CAM",    "release": "", "repeat_ms": 0, "description": "Left stick click (right-click the stick)" },
     "r3": { "key": "V", "press": "CENTER", "release": "", "repeat_ms": 0, "description": "Right stick click (right-click the stick)" },
 
-    "create":   { "key": "1", "press": "L", "release": "S", "repeat_ms": 0, "description": "Left indicator (toggle)",
+    "create":   { "key": "1", "press": "LI", "release": "ST", "repeat_ms": 0, "description": "Left indicator (toggle)",
                   "display_press": { "indicator": "left" } },
-    "options":  { "key": "2", "press": "R", "release": "S", "repeat_ms": 0, "description": "Right indicator (toggle)",
+    "options":  { "key": "2", "press": "RI", "release": "ST", "repeat_ms": 0, "description": "Right indicator (toggle)",
                   "display_press": { "indicator": "right" } },
     "ps":       { "key": "P", "press": "PAIR",  "release": "", "repeat_ms": 0 },
     "touchpad": { "key": "T", "press": "TOUCH", "release": "", "repeat_ms": 0 },

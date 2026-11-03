@@ -19,15 +19,15 @@ class WifiDriver final {
     ~WifiDriver(); // Disconnect
     void connect(); // Connect to WiFi
     int receiveUDP();
-    uint8_t getBuffer() { return buffer_; }
-    void sendUDP(const uint8_t& data, 
+    uint16_t getBuffer() { return buffer_; }
+    void sendUDP(const uint16_t& data, 
         const char* ip, const uint16_t port);
     
     private:
     uint16_t port_ = 5000;
     WiFiUDP udp_;
     int sock_;
-    uint8_t buffer_;
+    uint16_t buffer_;
 };
 
 #endif

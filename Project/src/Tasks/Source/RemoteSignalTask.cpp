@@ -32,9 +32,13 @@ void RemoteSignalTask::updateRoutine() {
         // ensure connect method is called already
         int len = wifiDriver_.receiveUDP();
         if(len > 0) {
+            
+            //Converting the received buffer to uint16_t and swapping the bytes to get the correct signal
+            uint16_t sig = (static_cast<uint16_t>(wifiDriver_.getBuffer()) >> 8)
+                            | (static_cast<uint16_t>(wifiDriver_.getBuffer()) << 8);
+                            
             // Type casting the received buffer to Signals enum
-            Signals signal = static_cast<Signals>(wifiDriver_.getBuffer());
-
+            Signals signal = static_cast<Signals>(sig);
             // Return ack
             wifiDriver_.sendUDP(wifiDriver_.getBuffer(), REMOTEIP, (uint16_t)PORT);
             

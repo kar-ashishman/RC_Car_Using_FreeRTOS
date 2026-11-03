@@ -26,8 +26,8 @@ public:
 
 class HeadLight: public LightDriver {
 public:
-    Headlight();
-    ~Headlight() = default;
+    HeadLight() = default;
+    ~HeadLight() = default;
     void static lightON(uint8_t pin);
     void static lightOFF(uint8_t pin);
 };
