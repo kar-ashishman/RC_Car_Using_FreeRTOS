@@ -80,6 +80,7 @@ Valid names are `dpad_up/down/left/right`, `triangle`, `circle`, `cross`, `squar
 | `press` | Command sent when the button is pressed |
 | `release` | Command sent when the button is released (empty = nothing). Example: `"S"` to stop when you let go of throttle. For indicator-toggle buttons (`display_press` sets `indicator` to `left`/`right`/`hazard`) nothing is sent on button release; instead, `release` is sent whenever that indicator is switched off — by pressing it again, or just before the `press` command of another indicator that replaces it. |
 | `repeat_ms` | If > 0, `press` is re-sent at this interval while the button is held |
+| `toggle` | If `true`, the button latches: the first press sends `press`, the next press sends `release`, and nothing is sent when the key is physically released. `display_press`/`display_release` are applied on the on/off presses. Example: headlights. |
 | `description` | Text shown in the tooltip |
 | `display_press` | Optional display change on press: `{"boost": true \| false \| "toggle"}`, `{"indicator": "left" \| "right" \| "hazard" \| "off"}` (choosing the indicator that's already on switches it off), `{"speed": 30}` (set) or `{"speed": "+5"}` (change). With `repeat_ms`, relative speed changes repeat too. |
 | `display_release` | Same format, applied on release. For example, `{"boost": false}` |

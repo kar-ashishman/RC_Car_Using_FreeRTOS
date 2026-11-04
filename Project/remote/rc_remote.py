@@ -86,6 +86,7 @@ class RemoteController(QObject):
         self.link = UdpLink()
         self._last_error, self._last_error_time = "", 0.0
         self._active: dict[str, set[str]] = {}
+        self._latched: set[str] = set()     # toggle buttons currently "on"
         self._repeat: dict[str, QTimer] = {}
         self._key_map: dict[int, str] = {}
         self._stick_mouse: dict[str, tuple[float, float] | None] = dict.fromkeys(STICKS)
@@ -102,6 +103,7 @@ class RemoteController(QObject):
         self._rx_timer.timeout.connect(self._poll_rx)
         self.display = DisplayState()
         self._last_rx: float | None = None
+        self._open_time = 0.0
         self._status = "offline"
         self._status_timer = QTimer(self)
         self._status_timer.timeout.connect(self._check_status)
@@ -129,6 +131,7 @@ class RemoteController(QObject):
             key_map[code] = name
 
         self.release_all("config reload", send_stop=False)
+        self._latched.clear()
         self.cfg = cfg
         self._key_map = key_map
         self._analog_last = dict.fromkeys(STICKS)
@@ -193,7 +196,7 @@ class RemoteController(QObject):
         parts = [f"key <b>{html.escape(b.key) or '—'}</b>",
                  f"press <code>{html.escape(b.press) or '—'}</code>"]
         if b.release:
-            parts.append(f"release <code>{html.escape(b.release)}</code>")
+            parts.append(f"{'press again' if b.toggle else 'release'} <code>{html.escape(b.release)}</code>")
         if b.repeat_ms:
             parts.append(f"repeat {b.repeat_ms} ms")
         for label_, action in (("display", b.display_press), ("display on release", b.display_release)):
@@ -207,15 +210,19 @@ class RemoteController(QObject):
         return self.cfg.display if self.cfg else DisplaySettings()
 
     def link_status(self) -> str:
-        """offline (socket closed), open (no replies expected), online or waiting (no recent reply)."""
+        """offline (socket closed, or no ack within the timeout), open (no replies expected),
+        online (recent ack) or waiting (just connected, first ack still pending)."""
         if not self.link.is_open:
             return "offline"
         timeout = self.display_settings.link_timeout_ms
         if timeout <= 0:
             return "open"
-        if self._last_rx is not None and time.monotonic() - self._last_rx <= timeout / 1000:
+        now = time.monotonic()
+        if self._last_rx is not None and now - self._last_rx <= timeout / 1000:
             return "online"
-        return "waiting"
+        if self._last_rx is None and now - self._open_time <= timeout / 1000:
+            return "waiting"
+        return "offline"
 
     def _check_status(self):
         status = self.link_status()
@@ -316,6 +323,15 @@ class RemoteController(QObject):
         b = self.cfg.buttons.get(name) if self.cfg else None
         if not b:
             return
+        if b.toggle and name in self._latched:
+            # Toggle button already on: this press switches it off, so send the release command.
+            self._latched.discard(name)
+            if b.release:
+                self.send(b.release, f"{name} (toggle off)")
+            self.apply_display_action(b.display_release)
+            return
+        if b.toggle:
+            self._latched.add(name)
         if self._is_indicator_toggle(b):
             if self.display.indicator == b.display_press["indicator"]:
                 # Indicator already on: this press switches it off, so send the release command.
@@ -351,11 +367,12 @@ class RemoteController(QObject):
         b = self.cfg.buttons.get(name) if self.cfg else None
         if not b:
             return
-        # Indicator toggles send their release command on the press that turns them off,
-        # never on button release.
-        if b.release and not self._is_indicator_toggle(b):
+        # Indicator and toggle buttons send their release command on the press that
+        # turns them off, never on button release.
+        if b.release and not self._is_indicator_toggle(b) and not b.toggle:
             self.send(b.release, f"{name} release")
-        self.apply_display_action(b.display_release)
+        if not b.toggle:
+            self.apply_display_action(b.display_release)
 
     def handle_key(self, event, pressed: bool) -> bool:
         name = self._key_map.get(_key_int(event.key()))
@@ -442,6 +459,7 @@ class RemoteController(QObject):
             return False
         self._last_error = ""
         self._last_rx = None
+        self._open_time = time.monotonic()
         self._rx_timer.start()
         self.log.emit("info", f"Sending to {self.link.description}")
         self.connection_changed.emit(True)
@@ -471,6 +489,7 @@ class RemoteController(QObject):
             return
         self._last_rx = time.monotonic()
         log_telemetry = self.display_settings.log_telemetry
+        heartbeat = self.cfg.behavior.heartbeat_command if self.cfg else ""
         for data, (ip, port) in packets:
             data = data.rstrip(b"\r\n")
             try:
@@ -479,6 +498,9 @@ class RemoteController(QObject):
                     raise ValueError
             except ValueError:
                 text = None
+            # Sync ack: the car echoes the heartbeat command back. Keep it out of the log.
+            if text is not None and heartbeat and text == heartbeat:
+                continue
             is_telemetry = text is not None and self.apply_telemetry(text)
             if self.cfg.udp.show_rx and (log_telemetry or not is_telemetry):
                 shown = text if text is not None else "hex " + data.hex(" ").upper()

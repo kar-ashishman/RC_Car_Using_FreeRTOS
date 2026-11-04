@@ -72,6 +72,7 @@ class ButtonBinding:
     press: str = ""
     release: str = ""
     repeat_ms: int = 0
+    toggle: bool = False  # press once = send 'press', press again = send 'release'; key release sends nothing
     description: str = ""
     display_press: dict = field(default_factory=dict)
     display_release: dict = field(default_factory=dict)

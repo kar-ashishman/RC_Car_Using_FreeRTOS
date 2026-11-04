@@ -12,8 +12,8 @@
   "behavior": {
     "stop_command": "S",
     "send_stop_on_focus_loss": true,
-    "heartbeat_command": "PING",
-    "heartbeat_interval_ms": 500,
+    "heartbeat_command": "SY",
+    "heartbeat_interval_ms": 1000,
     "show_key_labels": true
   },
 
@@ -21,7 +21,7 @@
     "speed_unit": "km/h",
     "speed_max": 60,
     "speed_decimals": 0,
-    "link_timeout_ms": 1500,
+    "link_timeout_ms": 3000,
     "blink_ms": 400,
     "log_telemetry": false,
     "telemetry_keys": { "speed": "SPD", "indicator": "IND", "boost": "BST" }
@@ -48,7 +48,7 @@
     "dpad_left":  { "key": "Left",  "press": "TRIM-L", "release": "", "repeat_ms": 0,   "description": "Steering trim left" },
     "dpad_right": { "key": "Right", "press": "TRIM-R", "release": "", "repeat_ms": 0,   "description": "Steering trim right" },
 
-    "triangle": { "key": "L",     "press": "LN",    "release": "LF",         "repeat_ms": 0, "description": "Toggle headlights" },
+    "triangle": { "key": "L",     "press": "LN",    "release": "LF",         "repeat_ms": 0, "toggle": true, "description": "Toggle headlights" },
     "circle":   { "key": "H",     "press": "HN",   "release": "HF", "repeat_ms": 0, "description": "Horn while held" },
     "cross":    { "key": "Space", "press": "K",      "release": "J",         "repeat_ms": 0, "description": "Emergency stop" },
     "square":   { "key": "K",     "press": "HZ",     "release": "ST",         "repeat_ms": 500, "description": "Hazard lights (toggle)",
