@@ -8,9 +8,14 @@ void setup() {
     WifiDriver wifiDriver;
     wifiDriver.connect();
 
+    // Create Remote Sync Task
+    RemoteSyncTask remoteSyncTask;
+    configASSERT(remoteSyncTask.taskCreate());
     // Create Motor Control Task
 
     // Create Head Light Control Task
+    LightsTask headLightTask;
+    configASSERT(headLightTask.taskCreate());
 
     // Create Horn Control Task
     HornTask hornTask;
@@ -21,7 +26,12 @@ void setup() {
     configASSERT(indicatorTask.taskCreate());
 
     // Create RemoteSignalTask
-    RemoteSignalTask remoteSignalTask(wifiDriver, hornTask, indicatorTask);
+    RemoteSignalTask remoteSignalTask(wifiDriver, 
+                        hornTask, 
+                        indicatorTask,
+                        headLightTask,
+                        remoteSyncTask);
+
     configASSERT(remoteSignalTask.taskCreate());    
     
     // Infinite Loop

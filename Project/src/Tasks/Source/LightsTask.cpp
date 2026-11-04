@@ -1,4 +1,5 @@
 #include "src/Tasks/Includes/LightsTask.hpp"
+#include "src/Services/Includes/LightDriver.hpp"
 #include "Arduino.h"
 #include "src/Guards/Includes/LockGuard.hpp"
 #include "src/Includes/GlobalData.hpp"
@@ -10,24 +11,27 @@ LightsTask::LightsTask() : Task(
         2048, 
         1, 
         CoreId::CONTROL_CORE,
-        2000
+        50
     ) {
-        pinMode(2, OUTPUT);
+        pinMode(pin_, OUTPUT);
     }
 
 LightsTask::~LightsTask() {
-    Serial.println("Deleting Lights");
-    digitalWrite(2, LOW);
     if(taskHandle_ != nullptr) vTaskDelete(taskHandle_);
 }
 
 void LightsTask::updateRoutine() {
-    static char state = 0;
-    Serial.println("Waiting for notification");
-    Notify::waitForNotification();
+
     while (true) {
-        state = state ^ 1;
-        digitalWrite(2, state);
-        vTaskDelay(500);
+        Notify::waitForNotification();
+        switch(signal_) {
+            case Signals::HEADLIGHTON:
+                HeadLight::lightON(pin_);
+                break;
+            case Signals::HEADLIGHTOFF:
+                HeadLight::lightOFF(pin_);
+                break;
+        }
+        signal_ = Signals::NONE;
     }
 }

@@ -11,14 +11,20 @@
 
 RemoteSignalTask::RemoteSignalTask(WifiDriver& wifiDriver,
                                    HornTask& hornTask, 
-                                   IndicatorTask& indicatorTask
+                                   IndicatorTask& indicatorTask,
+                                   LightsTask& lightTask,
+                                   RemoteSyncTask& remoteSyncTask
 ) : Task(
         "RemoteSignal", 
         2048, 
         1, 
         CoreId::COMMUNICATION_CORE,
         50
-    ), wifiDriver_(wifiDriver), hornTask_(hornTask), indicatorTask_(indicatorTask) {}
+    ), wifiDriver_(wifiDriver), 
+       hornTask_(hornTask), 
+       indicatorTask_(indicatorTask),
+       lightTask_(lightTask),
+       remoteSyncTask_(remoteSyncTask){}
 
 RemoteSignalTask::~RemoteSignalTask() {
     if(taskHandle_ != nullptr) vTaskDelete(taskHandle_);
@@ -36,7 +42,7 @@ void RemoteSignalTask::updateRoutine() {
             //Converting the received buffer to uint16_t and swapping the bytes to get the correct signal
             uint16_t sig = (static_cast<uint16_t>(wifiDriver_.getBuffer()) >> 8)
                             | (static_cast<uint16_t>(wifiDriver_.getBuffer()) << 8);
-                            
+
             // Type casting the received buffer to Signals enum
             Signals signal = static_cast<Signals>(sig);
             // Return ack
@@ -60,6 +66,18 @@ void RemoteSignalTask::updateRoutine() {
                     indicatorTask_.updateParam(signal);
                     Notify::wakeTask(indicatorTask_);
                     break; 
+                
+                //Handling headlight commands
+                case Signals::HEADLIGHTON:
+                case Signals::HEADLIGHTOFF:
+                    lightTask_.updateParam(signal);
+                    Notify::wakeTask(lightTask_);
+                    break;
+
+                case Signals::SYNC:
+                    remoteSyncTask_.updateParam(signal);
+                    Notify::wakeTask(remoteSyncTask_);
+                    break;
             }
         }
         else

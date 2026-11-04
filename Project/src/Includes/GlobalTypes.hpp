@@ -34,5 +34,8 @@ enum class Signals{
     IND_LEFT = 'LI',
     IND_RIGHT = 'RI',
     HAZARD = 'HZ',
-    IND_OFF = 'ST'
+    IND_OFF = 'ST',
+    HEADLIGHTON = 'LN',
+    HEADLIGHTOFF = 'LF',
+    SYNC = 'SY'
 };

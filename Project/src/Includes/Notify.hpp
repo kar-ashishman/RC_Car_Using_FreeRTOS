@@ -13,7 +13,7 @@ class Notify final {
         xTaskNotifyGive(task.getHandle());
     }
     static bool waitForNotification(uint32_t timeOut = portMAX_DELAY) {
-        return ulTaskNotifyTake(pdTRUE, timeOut) > 0;
+        return ulTaskNotifyTake(pdTRUE, pdMS_TO_TICKS(timeOut)) > 0;
     }
     static void wakeTaskFromISR(Task& task, BaseType_t *higherPriorityTaskWorken) {
         vTaskNotifyGiveFromISR(task.getHandle(), higherPriorityTaskWorken);
