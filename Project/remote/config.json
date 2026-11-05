@@ -2,7 +2,7 @@
   "udp": {
     "host": "192.168.4.1",
     "port": 4210,
-    "local_port": 0,
+    "local_port": 5000,
     "line_ending": "",
     "encoding": "ascii",
     "auto_connect": false,
@@ -27,14 +27,20 @@
     "telemetry_keys": { "speed": "SPD", "indicator": "IND", "boost": "BST" }
   },
 
+  "drive": {
+    "gear_count": 5,
+    "ramp_percent_per_sec": 4,
+    "interval_ms": 250
+  },
+
   "analog_sticks": {
     "left":  { "command": "", "interval_ms": 50, "range": 100, "invert_y": true },
     "right": { "command": "", "interval_ms": 50, "range": 100, "invert_y": true }
   },
 
   "buttons": {
-    "left_stick_up":    { "key": "W", "press": "F",  "release": "S", "repeat_ms": 0, "description": "Throttle forward" },
-    "left_stick_down":  { "key": "S", "press": "B",  "release": "S", "repeat_ms": 0, "description": "Reverse" },
+    "left_stick_up":    { "key": "W", "press": "F{speed:02X}", "release": "FS", "repeat_ms": 0, "throttle": true, "description": "Throttle forward (speed ramps, capped by gear)" },
+    "left_stick_down":  { "key": "S", "press": "B{speed:02X}", "release": "BS", "repeat_ms": 0, "throttle": true, "description": "Reverse (speed ramps, capped by gear)" },
     "left_stick_left":  { "key": "",  "press": "",   "release": "",  "repeat_ms": 0 },
     "left_stick_right": { "key": "",  "press": "",   "release": "",  "repeat_ms": 0 },
 
@@ -43,10 +49,10 @@
     "right_stick_left":  { "key": "A", "press": "L", "release": "C", "repeat_ms": 0, "description": "Steer left" },
     "right_stick_right": { "key": "D", "press": "R", "release": "C", "repeat_ms": 0, "description": "Steer right" },
 
-    "dpad_up":    { "key": "Up",    "press": "SPD+",   "release": "", "repeat_ms": 250, "description": "Speed up (repeats while held)" },
-    "dpad_down":  { "key": "Down",  "press": "SPD-",   "release": "", "repeat_ms": 250, "description": "Speed down (repeats while held)" },
-    "dpad_left":  { "key": "Left",  "press": "TRIM-L", "release": "", "repeat_ms": 0,   "description": "Steering trim left" },
-    "dpad_right": { "key": "Right", "press": "TRIM-R", "release": "", "repeat_ms": 0,   "description": "Steering trim right" },
+    "dpad_up":    { "key": "Up",    "press": "S+",   "release": "", "repeat_ms": 250, "description": "Speed up (repeats while held)" },
+    "dpad_down":  { "key": "Down",  "press": "S-",   "release": "", "repeat_ms": 250, "description": "Speed down (repeats while held)" },
+    "dpad_left":  { "key": "Left",  "press": "L+", "release": "", "repeat_ms": 0,   "description": "Steering trim left" },
+    "dpad_right": { "key": "Right", "press": "R+", "release": "", "repeat_ms": 0,   "description": "Steering trim right" },
 
     "triangle": { "key": "L",     "press": "LN",    "release": "LF",         "repeat_ms": 0, "toggle": true, "description": "Toggle headlights" },
     "circle":   { "key": "H",     "press": "HN",   "release": "HF", "repeat_ms": 0, "description": "Horn while held" },
@@ -54,8 +60,8 @@
     "square":   { "key": "K",     "press": "HZ",     "release": "ST",         "repeat_ms": 500, "description": "Hazard lights (toggle)",
                   "display_press": { "indicator": "hazard" } },
 
-    "l1": { "key": "Q", "press": "GEAR-", "release": "", "repeat_ms": 0, "description": "Gear down" },
-    "r1": { "key": "E", "press": "GEAR+", "release": "", "repeat_ms": 0, "description": "Gear up" },
+    "l1": { "key": "Q", "press": "GEAR-", "release": "", "repeat_ms": 0, "gear": -1, "description": "Gear down" },
+    "r1": { "key": "E", "press": "GEAR+", "release": "", "repeat_ms": 0, "gear": 1,  "description": "Gear up" },
     "l2": { "key": "Z", "press": "BRAKE", "release": "BRAKE_OFF", "repeat_ms": 0, "description": "Brake while held" },
     "r2": { "key": "X", "press": "BOOST", "release": "BOOST_OFF", "repeat_ms": 0, "description": "Boost while held",
             "display_press": { "boost": true }, "display_release": { "boost": false } },

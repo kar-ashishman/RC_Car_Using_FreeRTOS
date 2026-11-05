@@ -463,6 +463,21 @@ class DualSenseWidget(QWidget):
             p.setPen(QColor("#5c6470"))
             p.drawText(pill, Qt.AlignCenter, "BOOST OFF")
 
+        # Gear
+        gpill = QRectF(380, 217, 58, 20)
+        f = QFont()
+        f.setPixelSize(11)
+        f.setBold(True)
+        f.setLetterSpacing(QFont.AbsoluteSpacing, 0.8)
+        p.setFont(f)
+        p.setPen(QPen(QColor("#3a414c"), 1.2))
+        p.setBrush(Qt.NoBrush)
+        p.drawRoundedRect(gpill, 10, 10)
+        p.setPen(QColor("#8b949e"))
+        p.drawText(gpill.adjusted(10, 0, 0, 0), Qt.AlignLeft | Qt.AlignVCenter, "GEAR")
+        p.setPen(QColor("#f2f5f8"))
+        p.drawText(gpill.adjusted(0, 0, -10, 0), Qt.AlignRight | Qt.AlignVCenter, str(self.ctrl.gear))
+
         # Glass sheen
         sheen = QPainterPath()
         sheen.moveTo(SCREEN.left(), SCREEN.top())

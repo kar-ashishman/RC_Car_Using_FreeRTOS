@@ -81,6 +81,8 @@ Valid names are `dpad_up/down/left/right`, `triangle`, `circle`, `cross`, `squar
 | `release` | Command sent when the button is released (empty = nothing). Example: `"S"` to stop when you let go of throttle. For indicator-toggle buttons (`display_press` sets `indicator` to `left`/`right`/`hazard`) nothing is sent on button release; instead, `release` is sent whenever that indicator is switched off — by pressing it again, or just before the `press` command of another indicator that replaces it. |
 | `repeat_ms` | If > 0, `press` is re-sent at this interval while the button is held |
 | `toggle` | If `true`, the button latches: the first press sends `press`, the next press sends `release`, and nothing is sent when the key is physically released. `display_press`/`display_release` are applied on the on/off presses. Example: headlights. |
+| `throttle` | If `true`, while the button is held, `press` is re-sent every `drive.interval_ms` with a `{speed}` placeholder that ramps up at `drive.ramp_percent_per_sec`, capped by the current gear. Example: `"press": "F{speed:02X}"` sends `F01`, `F02` … `F14` (hex percent). `release` is sent as usual when let go. |
+| `gear` | Shifts the current gear by this amount on press (e.g. `1` / `-1`), clamped to `1 … drive.gear_count`. Gear N caps throttle speed at N × 100 / gear_count percent. |
 | `description` | Text shown in the tooltip |
 | `display_press` | Optional display change on press: `{"boost": true \| false \| "toggle"}`, `{"indicator": "left" \| "right" \| "hazard" \| "off"}` (choosing the indicator that's already on switches it off), `{"speed": 30}` (set) or `{"speed": "+5"}` (change). With `repeat_ms`, relative speed changes repeat too. |
 | `display_release` | Same format, applied on release. For example, `{"boost": false}` |
@@ -129,6 +131,15 @@ Keys starting with `_` (for example `"_comment"`) are ignored, so you can use th
 | `blink_ms` | Indicator blink period |
 | `log_telemetry` | Also write telemetry packets to the log |
 | `telemetry_keys` | Names of the telemetry keys: `{"speed": "SPD", "indicator": "IND", "boost": "BST"}`. Set a key to `""` to ignore it. |
+
+### `drive` (gears and throttle ramp)
+Used by buttons with `"throttle": true` and `"gear": ±N`.
+
+| Field | Meaning |
+|---|---|
+| `gear_count` | Number of gears (default 5). Gear N caps throttle speed at N × 100 / gear_count percent, so with 5 gears: 20 / 40 / 60 / 80 / 100 %. |
+| `ramp_percent_per_sec` | How fast the speed percent builds up while a throttle button is held (default 4 → 0 to 20 % takes 5 s). |
+| `interval_ms` | How often the throttle command is re-sent while held (default 250 → 1 % per packet at the default ramp). |
 
 ## Car side (ESP32 / ESP8266 Arduino example)
 ```cpp
