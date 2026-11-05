@@ -7,10 +7,8 @@ void LeftIndicator::lightON(uint8_t pin, uint16_t delay, IndicatorTask& indicato
         while(1){
            digitalWrite(pin,HIGH);
            vTaskDelay(delay);
-           if(indicatorTask.getParam() == Signals::IND_OFF) {LeftIndicator::lightOFF(pin); return;};
            digitalWrite(pin,LOW);
            vTaskDelay(delay);  
-           if(indicatorTask.getParam() == Signals::IND_OFF) {LeftIndicator::lightOFF(pin); return;};    
         }  
 }
 
@@ -18,10 +16,8 @@ void RightIndicator::lightON(uint8_t pin, uint16_t delay, IndicatorTask& indicat
         while(1){
            digitalWrite(pin,HIGH);
            vTaskDelay(delay);
-           if(indicatorTask.getParam() == Signals::IND_OFF) {LeftIndicator::lightOFF(pin); return;};
            digitalWrite(pin,LOW);
            vTaskDelay(delay);
-           if(indicatorTask.getParam() == Signals::IND_OFF) {LeftIndicator::lightOFF(pin); return;};
         }
 }
 

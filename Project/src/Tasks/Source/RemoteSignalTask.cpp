@@ -6,12 +6,12 @@
 #include "src/Services/Includes/WifiDriver.hpp"
 #include "src/Includes/GlobalTypes.hpp"
 
-#define REMOTEIP                "192.168.1.7"
+#define REMOTEIP                "192.168.31.148"
 #define PORT                    5000
 
 RemoteSignalTask::RemoteSignalTask(WifiDriver& wifiDriver,
                                    HornTask& hornTask, 
-                                   IndicatorTask& indicatorTask,
+                                   IndicatorSchTask& indicatorSchTask,
                                    LightsTask& lightTask,
                                    RemoteSyncTask& remoteSyncTask
 ) : Task(
@@ -22,7 +22,7 @@ RemoteSignalTask::RemoteSignalTask(WifiDriver& wifiDriver,
         50
     ), wifiDriver_(wifiDriver), 
        hornTask_(hornTask), 
-       indicatorTask_(indicatorTask),
+       indicatorSchTask_(indicatorSchTask),
        lightTask_(lightTask),
        remoteSyncTask_(remoteSyncTask){}
 
@@ -63,8 +63,8 @@ void RemoteSignalTask::updateRoutine() {
                 case Signals::IND_RIGHT:
                 case Signals::HAZARD:
                 case Signals::IND_OFF:
-                    indicatorTask_.updateParam(signal);
-                    Notify::wakeTask(indicatorTask_);
+                    indicatorSchTask_.updateParam(signal);
+                    Notify::wakeTask(indicatorSchTask_);
                     break; 
                 
                 //Handling headlight commands
