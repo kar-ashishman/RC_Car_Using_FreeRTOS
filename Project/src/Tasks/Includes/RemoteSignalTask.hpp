@@ -2,6 +2,7 @@
 
 #include "src/Includes/Task.hpp"
 #include "src/Services/Includes/WifiDriver.hpp"
+#include "src/Tasks/Includes/MotorTask.hpp"
 #include "src/Tasks/Includes/HornTask.hpp"
 #include "src/Tasks/Includes/LightsTask.hpp"
 #include "src/Tasks/Includes/IndicatorSchTask.hpp"
@@ -13,7 +14,8 @@ public:
                     HornTask& hornTask, 
                     IndicatorSchTask& indicatorSchTask,
                     LightsTask& lightTask,
-                    RemoteSyncTask& remoteSyncTask);   
+                    RemoteSyncTask& remoteSyncTask,
+                    MotorTask& motorTask);   
 
     ~RemoteSignalTask() override;
 
@@ -24,4 +26,5 @@ private:
     IndicatorSchTask& indicatorSchTask_;
     LightsTask& lightTask_;
     RemoteSyncTask& remoteSyncTask_;
+    MotorTask& motorTask_;
 };

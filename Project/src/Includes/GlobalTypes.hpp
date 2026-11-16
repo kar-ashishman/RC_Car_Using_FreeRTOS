@@ -25,17 +25,20 @@ enum class Indicator{
 };
 
 enum class Signals{
-    NONE,
-    FORWARD,
-    REVERSE,
-    HORNON = 'HN',
-    HORNOFF = 'HF',
-    HORNDANCE = 'HD',
-    IND_LEFT = 'LI',
-    IND_RIGHT = 'RI',
-    HAZARD = 'HZ',
-    IND_OFF = 'ST',
-    HEADLIGHTON = 'LN',
-    HEADLIGHTOFF = 'LF',
-    SYNC = 'SY'
+    NONE = 0x00,
+    STOP = 0xF100,
+    FORWARD = 0xF101,
+    REVERSE = 0xF201,
+    STEER_LEFT = 0xF301,
+    STEER_RIGHT = 0xF401,
+    HORNON = 0xF501,
+    HORNOFF = 0xF500,
+    HORNDANCE = 0xF502,
+    IND_LEFT = 0xF601,
+    IND_RIGHT = 0xF602,
+    HAZARD = 0xF603,
+    IND_OFF = 0xF600,
+    HEADLIGHTON = 0xF701,
+    HEADLIGHTOFF = 0xF700,
+    SYNC = 0xEE00
 };

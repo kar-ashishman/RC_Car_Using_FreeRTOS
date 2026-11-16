@@ -13,18 +13,15 @@ RemoteSignalTask::RemoteSignalTask(WifiDriver& wifiDriver,
                                    HornTask& hornTask, 
                                    IndicatorSchTask& indicatorSchTask,
                                    LightsTask& lightTask,
-                                   RemoteSyncTask& remoteSyncTask
-) : Task(
-        "RemoteSignal", 
-        2048, 
-        1, 
-        CoreId::COMMUNICATION_CORE,
-        50
-    ), wifiDriver_(wifiDriver), 
+                                   RemoteSyncTask& remoteSyncTask,
+                                   MotorTask& motorTask) 
+       : Task("RemoteSignal",2048,1,CoreId::COMMUNICATION_CORE,50), 
+       wifiDriver_(wifiDriver), 
        hornTask_(hornTask), 
        indicatorSchTask_(indicatorSchTask),
        lightTask_(lightTask),
-       remoteSyncTask_(remoteSyncTask){}
+       remoteSyncTask_(remoteSyncTask),
+       motorTask_(motorTask){}
 
 RemoteSignalTask::~RemoteSignalTask() {
     if(taskHandle_ != nullptr) vTaskDelete(taskHandle_);
@@ -40,14 +37,17 @@ void RemoteSignalTask::updateRoutine() {
         if(len > 0) {
             
             //Converting the received buffer to uint16_t and swapping the bytes to get the correct signal
-            uint16_t sig = (static_cast<uint16_t>(wifiDriver_.getBuffer()) >> 8)
+            uint16_t signal_swapped = (static_cast<uint16_t>(wifiDriver_.getBuffer()) >> 8)
                             | (static_cast<uint16_t>(wifiDriver_.getBuffer()) << 8);
 
-            // Type casting the received buffer to Signals enum
-            Signals signal = static_cast<Signals>(sig);
+            Signals byte_1 = static_cast<Signals>((signal_swapped >> 8) & 0xFF); // Extract the first byte
+            int8_t byte_2 = signal_swapped & 0xFF;        // Extract the second byte
+
             // Return ack
-            wifiDriver_.sendUDP(wifiDriver_.getBuffer(), REMOTEIP, (uint16_t)PORT);
+            //wifiDriver_.sendUDP(wifiDriver_.getBuffer(), REMOTEIP, (uint16_t)PORT);
+            Serial.println("Received Signal: " + String((signal_swapped >> 8) & 0xFF) + " with value: " + String(byte_2));
             
+            Signals signal = static_cast<Signals>(signal_swapped);
             /******** NOTIFY TASKS BASED ON REMOTE SIGNALS *********/
             switch(signal) {
                 //Handling horn commands
@@ -77,6 +77,13 @@ void RemoteSignalTask::updateRoutine() {
                 case Signals::SYNC:
                     remoteSyncTask_.updateParam(signal);
                     Notify::wakeTask(remoteSyncTask_);
+                    break;
+                case Signals::FORWARD:
+                case Signals::REVERSE:
+                case Signals::STOP:
+                    motorTask_.updateParam(signal);
+                    motorTask_.updateSpeed(byte_2);
+                    Notify::wakeTask(motorTask_);
                     break;
             }
         }

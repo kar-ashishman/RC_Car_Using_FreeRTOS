@@ -8,6 +8,10 @@ void setup() {
     WifiDriver wifiDriver;
     wifiDriver.connect();
 
+    //Create Motor Control Task
+    MotorTask motorTask;
+    configASSERT(motorTask.taskCreate());
+
     // Create Remote Sync Task
     RemoteSyncTask remoteSyncTask;
     configASSERT(remoteSyncTask.taskCreate());
@@ -30,7 +34,8 @@ void setup() {
                         hornTask, 
                         indicatorSchTask,
                         headLightTask,
-                        remoteSyncTask);
+                        remoteSyncTask,
+                        motorTask);
 
     configASSERT(remoteSignalTask.taskCreate());    
     
