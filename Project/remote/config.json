@@ -10,9 +10,9 @@
   },
 
   "behavior": {
-    "stop_command": "S",
+    "stop_command": "hex:F1 00",
     "send_stop_on_focus_loss": true,
-    "heartbeat_command": "SY",
+    "heartbeat_command": "hex:EE 00",
     "heartbeat_interval_ms": 1000,
     "show_key_labels": true
   },
@@ -27,47 +27,54 @@
     "telemetry_keys": { "speed": "SPD", "indicator": "IND", "boost": "BST" }
   },
 
+  "drive": {
+    "gear_count": 5,
+    "ramp_percent_per_sec": 4,
+    "interval_ms": 250
+  },
+
   "analog_sticks": {
     "left":  { "command": "", "interval_ms": 50, "range": 100, "invert_y": true },
     "right": { "command": "", "interval_ms": 50, "range": 100, "invert_y": true }
   },
 
   "buttons": {
-    "left_stick_up":    { "key": "W", "press": "F",  "release": "S", "repeat_ms": 0, "description": "Throttle forward" },
-    "left_stick_down":  { "key": "S", "press": "B",  "release": "S", "repeat_ms": 0, "description": "Reverse" },
+    "_comment": "Every command is 2 raw bytes: MSB = command, LSB = sub-command. F1=forward F2=reverse (LSB = speed percent 00-64), F3=steer left, F4=steer right, F5=horn (00 off / 01 on / 02 dance), F6=indicator (00 off / 01 left / 02 right / 03 hazard), F7=headlight (00 off / 01 on), EE 00=sync. hex: templates are formatted first, so {speed:02X} fills the speed byte.",
+    "left_stick_up":    { "key": "W", "press": "hex:F1 {speed:02X}", "release": "hex:F1 00", "repeat_ms": 0, "throttle": true, "description": "Throttle forward (speed ramps, capped by gear)" },
+    "left_stick_down":  { "key": "S", "press": "hex:F2 {speed:02X}", "release": "hex:F2 00", "repeat_ms": 0, "throttle": true, "description": "Reverse (speed ramps, capped by gear)" },
     "left_stick_left":  { "key": "",  "press": "",   "release": "",  "repeat_ms": 0 },
     "left_stick_right": { "key": "",  "press": "",   "release": "",  "repeat_ms": 0 },
 
     "right_stick_up":    { "key": "",  "press": "",  "release": "",  "repeat_ms": 0 },
     "right_stick_down":  { "key": "",  "press": "",  "release": "",  "repeat_ms": 0 },
-    "right_stick_left":  { "key": "A", "press": "L", "release": "C", "repeat_ms": 0, "description": "Steer left" },
-    "right_stick_right": { "key": "D", "press": "R", "release": "C", "repeat_ms": 0, "description": "Steer right" },
+    "right_stick_left":  { "key": "A", "press": "hex:F3 01", "release": "", "repeat_ms": 0, "description": "Steer left" },
+    "right_stick_right": { "key": "D", "press": "hex:F4 01", "release": "", "repeat_ms": 0, "description": "Steer right" },
 
-    "dpad_up":    { "key": "Up",    "press": "SPD+",   "release": "", "repeat_ms": 250, "description": "Speed up (repeats while held)" },
-    "dpad_down":  { "key": "Down",  "press": "SPD-",   "release": "", "repeat_ms": 250, "description": "Speed down (repeats while held)" },
-    "dpad_left":  { "key": "Left",  "press": "TRIM-L", "release": "", "repeat_ms": 0,   "description": "Steering trim left" },
-    "dpad_right": { "key": "Right", "press": "TRIM-R", "release": "", "repeat_ms": 0,   "description": "Steering trim right" },
+    "dpad_up":    { "key": "Up",    "press": "",   "release": "", "repeat_ms": 250, "description": "Speed up (no car signal yet)" },
+    "dpad_down":  { "key": "Down",  "press": "",   "release": "", "repeat_ms": 250, "description": "Speed down (no car signal yet)" },
+    "dpad_left":  { "key": "Left",  "press": "", "release": "", "repeat_ms": 0,   "description": "Steering trim left (no car signal yet)" },
+    "dpad_right": { "key": "Right", "press": "", "release": "", "repeat_ms": 0,   "description": "Steering trim right (no car signal yet)" },
 
-    "triangle": { "key": "L",     "press": "LN",    "release": "LF",         "repeat_ms": 0, "toggle": true, "description": "Toggle headlights" },
-    "circle":   { "key": "H",     "press": "HN",   "release": "HF", "repeat_ms": 0, "description": "Horn while held" },
-    "cross":    { "key": "Space", "press": "K",      "release": "J",         "repeat_ms": 0, "description": "Emergency stop" },
-    "square":   { "key": "K",     "press": "HZ",     "release": "ST",         "repeat_ms": 500, "description": "Hazard lights (toggle)",
+    "triangle": { "key": "L",     "press": "hex:F7 01",    "release": "hex:F7 00",         "repeat_ms": 0, "toggle": true, "description": "Toggle headlights" },
+    "circle":   { "key": "H",     "press": "hex:F5 01",   "release": "hex:F5 00", "repeat_ms": 0, "description": "Horn while held" },
+    "cross":    { "key": "Space", "press": "hex:F1 00",      "release": "",         "repeat_ms": 0, "description": "Emergency stop (speed 0)" },
+    "square":   { "key": "K",     "press": "hex:F6 03",     "release": "hex:F6 00",         "repeat_ms": 500, "description": "Hazard lights (toggle)",
                   "display_press": { "indicator": "hazard" } },
 
-    "l1": { "key": "Q", "press": "GEAR-", "release": "", "repeat_ms": 0, "description": "Gear down" },
-    "r1": { "key": "E", "press": "GEAR+", "release": "", "repeat_ms": 0, "description": "Gear up" },
-    "l2": { "key": "Z", "press": "BRAKE", "release": "BRAKE_OFF", "repeat_ms": 0, "description": "Brake while held" },
-    "r2": { "key": "X", "press": "BOOST", "release": "BOOST_OFF", "repeat_ms": 0, "description": "Boost while held",
+    "l1": { "key": "Q", "press": "", "release": "", "repeat_ms": 0, "gear": -1, "description": "Gear down (remote side, caps throttle)" },
+    "r1": { "key": "E", "press": "", "release": "", "repeat_ms": 0, "gear": 1,  "description": "Gear up (remote side, caps throttle)" },
+    "l2": { "key": "Z", "press": "", "release": "", "repeat_ms": 0, "description": "Brake (no car signal yet)" },
+    "r2": { "key": "X", "press": "", "release": "", "repeat_ms": 0, "description": "Boost (no car signal yet)",
             "display_press": { "boost": true }, "display_release": { "boost": false } },
-    "l3": { "key": "C", "press": "CAM",    "release": "", "repeat_ms": 0, "description": "Left stick click (right-click the stick)" },
-    "r3": { "key": "V", "press": "CENTER", "release": "", "repeat_ms": 0, "description": "Right stick click (right-click the stick)" },
+    "l3": { "key": "C", "press": "",    "release": "", "repeat_ms": 0, "description": "Left stick click (right-click the stick)" },
+    "r3": { "key": "V", "press": "", "release": "", "repeat_ms": 0, "description": "Right stick click (right-click the stick)" },
 
-    "create":   { "key": "1", "press": "LI", "release": "ST", "repeat_ms": 0, "description": "Left indicator (toggle)",
+    "create":   { "key": "1", "press": "hex:F6 01", "release": "hex:F6 00", "repeat_ms": 0, "description": "Left indicator (toggle)",
                   "display_press": { "indicator": "left" } },
-    "options":  { "key": "2", "press": "RI", "release": "ST", "repeat_ms": 0, "description": "Right indicator (toggle)",
+    "options":  { "key": "2", "press": "hex:F6 02", "release": "hex:F6 00", "repeat_ms": 0, "description": "Right indicator (toggle)",
                   "display_press": { "indicator": "right" } },
-    "ps":       { "key": "P", "press": "PAIR",  "release": "", "repeat_ms": 0 },
-    "touchpad": { "key": "T", "press": "TOUCH", "release": "", "repeat_ms": 0 },
-    "mute":     { "key": "M", "press": "MUTE",  "release": "", "repeat_ms": 0 }
+    "ps":       { "key": "P", "press": "",  "release": "", "repeat_ms": 0 },
+    "touchpad": { "key": "T", "press": "", "release": "", "repeat_ms": 0 },
+    "mute":     { "key": "M", "press": "hex:F5 02",  "release": "", "repeat_ms": 0, "description": "Horn dance (one-shot)" }
   }
 }

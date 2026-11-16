@@ -66,6 +66,13 @@ class DisplaySettings:
 
 
 @dataclass
+class DriveSettings:
+    gear_count: int = 5              # gear N caps speed at N * 100 / gear_count percent
+    ramp_percent_per_sec: float = 4  # how fast speed builds up while throttle is held
+    interval_ms: int = 250           # how often the ramped speed command is sent
+
+
+@dataclass
 class ButtonBinding:
     name: str = ""
     key: str = ""
@@ -73,6 +80,8 @@ class ButtonBinding:
     release: str = ""
     repeat_ms: int = 0
     toggle: bool = False  # press once = send 'press', press again = send 'release'; key release sends nothing
+    throttle: bool = False  # while held, 'press' is sent every drive.interval_ms with a ramped {speed} percent
+    gear: int = 0           # pressing shifts the current gear by this amount (e.g. 1 or -1)
     description: str = ""
     display_press: dict = field(default_factory=dict)
     display_release: dict = field(default_factory=dict)
@@ -84,6 +93,7 @@ class RemoteConfig:
     udp: UdpSettings
     behavior: Behavior
     display: DisplaySettings
+    drive: DriveSettings
     sticks: dict[str, AnalogStick]
     buttons: dict[str, ButtonBinding]
     warnings: list[str] = field(default_factory=list)
@@ -165,7 +175,7 @@ def load_config(path: str | Path) -> RemoteConfig:
     for key in raw:
         if key == "serial":
             warnings.append("Section 'serial' is no longer used; configure 'udp' instead")
-        elif key not in ("udp", "behavior", "display", "analog_sticks", "buttons") and not key.startswith("_"):
+        elif key not in ("udp", "behavior", "display", "drive", "analog_sticks", "buttons") and not key.startswith("_"):
             warnings.append(f"Unknown section '{key}' ignored")
 
     udp = _fill(UdpSettings, raw.get("udp"), "udp", warnings)
@@ -199,6 +209,13 @@ def load_config(path: str | Path) -> RemoteConfig:
         tkeys[key] = value
     display.telemetry_keys = tkeys
 
+    drive = _fill(DriveSettings, raw.get("drive"), "drive", warnings)
+    if not isinstance(drive.gear_count, int) or not 1 <= drive.gear_count <= 20:
+        raise ConfigError("drive.gear_count must be a whole number from 1 to 20")
+    if drive.ramp_percent_per_sec <= 0:
+        raise ConfigError("drive.ramp_percent_per_sec must be positive")
+    drive.interval_ms = max(50, drive.interval_ms)
+
     sticks_raw = raw.get("analog_sticks") or {}
     if not isinstance(sticks_raw, dict):
         raise ConfigError("'analog_sticks' must be an object")
@@ -224,12 +241,14 @@ def load_config(path: str | Path) -> RemoteConfig:
             b.repeat_ms = 20
         b.display_press = _check_display_action(b.display_press, f"buttons.{name}.display_press")
         b.display_release = _check_display_action(b.display_release, f"buttons.{name}.display_release")
+        if b.throttle and "{speed" not in b.press:
+            warnings.append(f"buttons.{name}: throttle is on but 'press' has no {{speed}} placeholder")
         buttons[name] = b
     for key in buttons_raw:
         if key not in BUTTON_NAMES and not key.startswith("_"):
             warnings.append(f"Unknown button 'buttons.{key}' ignored (valid: {', '.join(BUTTON_NAMES)})")
 
-    return RemoteConfig(path, udp, behavior, display, sticks, buttons, warnings)
+    return RemoteConfig(path, udp, behavior, display, drive, sticks, buttons, warnings)
 
 
 def encode_command(template: str, udp: UdpSettings, **values) -> bytes:

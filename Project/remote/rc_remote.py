@@ -87,6 +87,9 @@ class RemoteController(QObject):
         self._last_error, self._last_error_time = "", 0.0
         self._active: dict[str, set[str]] = {}
         self._latched: set[str] = set()     # toggle buttons currently "on"
+        self._gear = 1
+        self._drive_speed: dict[str, float] = {}   # ramped speed percent per held throttle button
+        self._drive_sent: dict[str, int] = {}      # last integer percent sent (quiet resends)
         self._repeat: dict[str, QTimer] = {}
         self._key_map: dict[int, str] = {}
         self._stick_mouse: dict[str, tuple[float, float] | None] = dict.fromkeys(STICKS)
@@ -132,6 +135,7 @@ class RemoteController(QObject):
 
         self.release_all("config reload", send_stop=False)
         self._latched.clear()
+        self._gear = min(max(self._gear, 1), cfg.drive.gear_count)
         self.cfg = cfg
         self._key_map = key_map
         self._analog_last = dict.fromkeys(STICKS)
@@ -160,6 +164,14 @@ class RemoteController(QObject):
     def is_active(self, name: str) -> bool:
         return bool(self._active.get(name))
 
+    @property
+    def gear(self) -> int:
+        return self._gear
+
+    @property
+    def gear_count(self) -> int:
+        return self.cfg.drive.gear_count if self.cfg else 1
+
     def key_label(self, name: str) -> str:
         b = self.cfg.buttons.get(name) if self.cfg else None
         return b.key.strip() if b else ""
@@ -170,7 +182,8 @@ class RemoteController(QObject):
         if name == "touchpad":
             keys = self.display_settings.telemetry_keys
             tele = ";".join(f"{k}:…" for k in keys.values() if k) or "disabled"
-            extra = (f"<br><i>Display</i> — link: {self.link_status()}, telemetry format from car: "
+            extra = (f"<br><i>Display</i> — link: {self.link_status()}, gear: {self._gear}/{self.gear_count}, "
+                     f"telemetry format from car: "
                      f"<code>{html.escape(tele)}</code>")
             b = self.cfg.buttons["touchpad"]
             title = "<b>touchpad</b>" + (f" — {html.escape(b.description)}" if b.description else "")
@@ -199,6 +212,10 @@ class RemoteController(QObject):
             parts.append(f"{'press again' if b.toggle else 'release'} <code>{html.escape(b.release)}</code>")
         if b.repeat_ms:
             parts.append(f"repeat {b.repeat_ms} ms")
+        if b.throttle:
+            parts.append("throttle (speed ramps while held, capped by gear)")
+        if b.gear:
+            parts.append(f"gear {b.gear:+d}")
         for label_, action in (("display", b.display_press), ("display on release", b.display_release)):
             if action:
                 parts.append(f"{label_} " + ", ".join(f"{k}={v}" for k, v in action.items()))
@@ -332,7 +349,21 @@ class RemoteController(QObject):
             return
         if b.toggle:
             self._latched.add(name)
-        if self._is_indicator_toggle(b):
+        if b.gear:
+            d = self.cfg.drive
+            new_gear = min(max(self._gear + b.gear, 1), d.gear_count)
+            if new_gear != self._gear:
+                self._gear = new_gear
+                self.log.emit("info", f"Gear {self._gear}/{d.gear_count} (speed cap {self._gear_cap():.0f}%)")
+        if b.throttle and b.press:
+            # Ramped drive: send 'press' with a growing {speed} percent every interval, capped by gear.
+            self._drive_speed[name] = 0.0
+            t = QTimer(self)
+            t.timeout.connect(partial(self._drive_tick, name, b))
+            t.start(self.cfg.drive.interval_ms)
+            self._repeat[name] = t
+            self._drive_tick(name, b)
+        elif self._is_indicator_toggle(b):
             if self.display.indicator == b.display_press["indicator"]:
                 # Indicator already on: this press switches it off, so send the release command.
                 self._send_indicator_off(self.display.indicator)
@@ -346,11 +377,25 @@ class RemoteController(QObject):
             self.send(b.press, name)
         self.apply_display_action(b.display_press)
         relative_speed = isinstance(b.display_press.get("speed"), str)
-        if b.repeat_ms > 0 and (b.press or relative_speed):
+        if not b.throttle and b.repeat_ms > 0 and (b.press or relative_speed):
             t = QTimer(self)
             t.timeout.connect(partial(self._on_repeat, name, b))
             t.start(b.repeat_ms)
             self._repeat[name] = t
+
+    def _gear_cap(self) -> float:
+        """Max speed percent allowed by the current gear (gear N of M caps at N * 100 / M)."""
+        return self._gear * 100.0 / self.cfg.drive.gear_count
+
+    def _drive_tick(self, name: str, b):
+        d = self.cfg.drive
+        step = d.ramp_percent_per_sec * d.interval_ms / 1000.0
+        speed = min(self._drive_speed.get(name, 0.0) + step, self._gear_cap())
+        self._drive_speed[name] = speed
+        value = round(speed)
+        quiet = self._drive_sent.get(name) == value  # only log when the percent changes
+        self._drive_sent[name] = value
+        self.send(b.press, name, quiet=quiet, speed=value)
 
     def _on_repeat(self, name: str, b):
         if b.press:
@@ -364,6 +409,8 @@ class RemoteController(QObject):
         if t:
             t.stop()
             t.deleteLater()
+        self._drive_speed.pop(name, None)
+        self._drive_sent.pop(name, None)
         b = self.cfg.buttons.get(name) if self.cfg else None
         if not b:
             return
@@ -489,18 +536,24 @@ class RemoteController(QObject):
             return
         self._last_rx = time.monotonic()
         log_telemetry = self.display_settings.log_telemetry
-        heartbeat = self.cfg.behavior.heartbeat_command if self.cfg else ""
-        for data, (ip, port) in packets:
-            data = data.rstrip(b"\r\n")
+        # Sync ack: the car echoes the heartbeat command back. Compare raw bytes so binary
+        # (hex:) heartbeats are recognized too, and keep them out of the log.
+        ack = b""
+        if self.cfg and self.cfg.behavior.heartbeat_command:
             try:
-                text = data.decode(self.cfg.udp.encoding)
+                ack = encode_command(self.cfg.behavior.heartbeat_command, self.cfg.udp)
+            except (ValueError, KeyError, IndexError, UnicodeEncodeError):
+                ack = b""
+        for data, (ip, port) in packets:
+            if ack and data == ack:
+                continue
+            try:
+                # Line endings are stripped from text packets only; binary data stays intact.
+                text = data.decode(self.cfg.udp.encoding).rstrip("\r\n")
                 if not text.isprintable():
                     raise ValueError
             except ValueError:
                 text = None
-            # Sync ack: the car echoes the heartbeat command back. Keep it out of the log.
-            if text is not None and heartbeat and text == heartbeat:
-                continue
             is_telemetry = text is not None and self.apply_telemetry(text)
             if self.cfg.udp.show_rx and (log_telemetry or not is_telemetry):
                 shown = text if text is not None else "hex " + data.hex(" ").upper()
