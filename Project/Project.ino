@@ -22,13 +22,13 @@ void setup() {
     configASSERT(hornTask.taskCreate());
 
     //Create Indicator Control Task
-    IndicatorTask indicatorTask;
-    configASSERT(indicatorTask.taskCreate());
+    IndicatorSchTask indicatorSchTask;
+    configASSERT(indicatorSchTask.taskCreate());
 
     // Create RemoteSignalTask
     RemoteSignalTask remoteSignalTask(wifiDriver, 
                         hornTask, 
-                        indicatorTask,
+                        indicatorSchTask,
                         headLightTask,
                         remoteSyncTask);
 

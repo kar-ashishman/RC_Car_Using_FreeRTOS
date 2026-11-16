@@ -24,7 +24,6 @@ IndicatorTask::~IndicatorTask() {
 void IndicatorTask::updateRoutine() {
     while(true)
     {   
-        Notify::waitForNotification();
         switch(signal_)
         {
             case Signals::IND_LEFT:
@@ -41,10 +40,9 @@ void IndicatorTask::updateRoutine() {
                 LeftIndicator::lightON(lPin_,500,*this);
                 RightIndicator::lightON(rPin_,500,*this);
                 break;
-
-            case Signals::IND_OFF:
-                LeftIndicator::lightOFF(lPin_);
-                RightIndicator::lightOFF(rPin_);
+            
+            default:
+                //IND_OFF is handled from IndicatorSchTask
                 break;
         }
         signal_ = Signals::NONE;
