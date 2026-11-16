@@ -37,16 +37,17 @@ void RemoteSignalTask::updateRoutine() {
         if(len > 0) {
             
             //Converting the received buffer to uint16_t and swapping the bytes to get the correct signal
-            uint16_t sig = (static_cast<uint16_t>(wifiDriver_.getBuffer()) >> 8)
+            uint16_t signal_swapped = (static_cast<uint16_t>(wifiDriver_.getBuffer()) >> 8)
                             | (static_cast<uint16_t>(wifiDriver_.getBuffer()) << 8);
 
-            Signals signal = static_cast<Signals>((sig >> 8) & 0xFF); // Extract the first byte
-            int8_t byte_2 = sig & 0xFF;        // Extract the second byte
+            Signals byte_1 = static_cast<Signals>((signal_swapped >> 8) & 0xFF); // Extract the first byte
+            int8_t byte_2 = signal_swapped & 0xFF;        // Extract the second byte
 
             // Return ack
             //wifiDriver_.sendUDP(wifiDriver_.getBuffer(), REMOTEIP, (uint16_t)PORT);
-            //Serial.println("Received Signal: " + String((sig >> 8) & 0xFF) + " with value: " + String(byte_2));
+            Serial.println("Received Signal: " + String((signal_swapped >> 8) & 0xFF) + " with value: " + String(byte_2));
             
+            Signals signal = static_cast<Signals>(signal_swapped);
             /******** NOTIFY TASKS BASED ON REMOTE SIGNALS *********/
             switch(signal) {
                 //Handling horn commands
