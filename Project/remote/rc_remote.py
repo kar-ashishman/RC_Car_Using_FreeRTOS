@@ -536,18 +536,24 @@ class RemoteController(QObject):
             return
         self._last_rx = time.monotonic()
         log_telemetry = self.display_settings.log_telemetry
-        heartbeat = self.cfg.behavior.heartbeat_command if self.cfg else ""
-        for data, (ip, port) in packets:
-            data = data.rstrip(b"\r\n")
+        # Sync ack: the car echoes the heartbeat command back. Compare raw bytes so binary
+        # (hex:) heartbeats are recognized too, and keep them out of the log.
+        ack = b""
+        if self.cfg and self.cfg.behavior.heartbeat_command:
             try:
-                text = data.decode(self.cfg.udp.encoding)
+                ack = encode_command(self.cfg.behavior.heartbeat_command, self.cfg.udp)
+            except (ValueError, KeyError, IndexError, UnicodeEncodeError):
+                ack = b""
+        for data, (ip, port) in packets:
+            if ack and data == ack:
+                continue
+            try:
+                # Line endings are stripped from text packets only; binary data stays intact.
+                text = data.decode(self.cfg.udp.encoding).rstrip("\r\n")
                 if not text.isprintable():
                     raise ValueError
             except ValueError:
                 text = None
-            # Sync ack: the car echoes the heartbeat command back. Keep it out of the log.
-            if text is not None and heartbeat and text == heartbeat:
-                continue
             is_telemetry = text is not None and self.apply_telemetry(text)
             if self.cfg.udp.show_rx and (log_telemetry or not is_telemetry):
                 shown = text if text is not None else "hex " + data.hex(" ").upper()
